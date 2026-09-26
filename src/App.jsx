@@ -90,7 +90,7 @@ function App() {
     return errors;
   }
 
-  function submitForm(event) {
+  async function submitForm(event) {
     event.preventDefault();
     const errors = validateForm();
     setFormErrors(errors);
@@ -100,11 +100,33 @@ function App() {
       return;
     }
 
-    setToast('Mensaje listo. Podés enviarlo desde tu cliente de correo.');
-    window.location.href = `mailto:${profile.email}?subject=Contacto desde portfolio&body=${encodeURIComponent(
-      `Nombre: ${formState.name}\nEmail: ${formState.email}\n\n${formState.message}`,
-    )}`;
-    setFormState({ name: '', email: '', message: '' });
+    setToast('Enviando mensaje...');
+
+    try {
+      const response = await fetch(`https://formsubmit.co/ajax/${profile.email}`, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formState.name,
+          email: formState.email,
+          message: formState.message,
+          _subject: 'Nuevo contacto desde el portfolio',
+          _template: 'table',
+          _captcha: 'false',
+        }),
+      });
+
+      if (!response.ok) throw new Error('No se pudo enviar el mensaje.');
+
+      setToast('Mensaje enviado. Revisá tu casilla de email.');
+      setFormState({ name: '', email: '', message: '' });
+    } catch {
+      setToast('No se pudo enviar directo. Copié tu email para escribir manualmente.');
+      navigator.clipboard.writeText(profile.email);
+    }
   }
 
   return (
@@ -174,7 +196,7 @@ function App() {
             </div>
             <div className="profile-card">
               {profile.avatarPath ? (
-                <img className="avatar-image" src={profile.avatarPath} alt="Pancho flotante, identidad digital de Matías" />
+                <img className="avatar-image" src={profile.avatarPath} alt="Identidad visual de Matías" />
               ) : (
                 <div className="avatar-placeholder" aria-label="Identidad digital pendiente">
                   MR
@@ -183,7 +205,6 @@ function App() {
               <div>
                 <h3>{profile.name}</h3>
                 <p>{profile.role} · Estudiante de Informática</p>
-                <p className="muted">Identidad digital: pancho-floating.</p>
               </div>
             </div>
           </div>
@@ -222,7 +243,7 @@ function App() {
               <p className="section-tag">03 / Portfolio</p>
               <h2 className="section-title">Dos juegos destacados y proyectos menores</h2>
               <p className="section-subtitle">
-                Las tarjetas quedan como plantilla editable para completar nombres, capturas, demos y repositorios.
+                Una selección de juegos, herramientas y trabajos técnicos desarrollados o practicados durante la formación.
               </p>
             </div>
 
@@ -293,8 +314,7 @@ function App() {
               <p className="section-tag">06 / Contacto</p>
               <h2 className="section-title">Hablemos de proyectos</h2>
               <p className="section-subtitle">
-                Contacto directo por email y GitHub. El formulario valida sin alertas del navegador y muestra mensajes
-                propios.
+                Contacto directo por email y GitHub. El formulario valida los datos y envía el mensaje a mi correo.
               </p>
               <div className="contact-actions">
                 <button className="link-button" type="button" onClick={copyEmail}>
@@ -336,7 +356,7 @@ function App() {
                 multiline
               />
               <button className="btn btn-primary btn-full" type="submit">
-                Preparar mensaje <Send size={18} aria-hidden="true" />
+                Enviar mensaje <Send size={18} aria-hidden="true" />
               </button>
             </form>
           </div>
@@ -363,7 +383,11 @@ function ProjectCard({ project, large = false }) {
   return (
     <article className={`project-card ${large ? 'project-card-large' : ''}`}>
       <div className="project-thumb">
-        <img src={project.image} alt={`Imagen editable para ${project.title}`} loading="lazy" />
+        {project.art ? (
+          <ProjectArt type={project.art} title={project.title} />
+        ) : (
+          <img src={project.image} alt={`Captura de ${project.title}`} loading="lazy" />
+        )}
         {project.status && <span className="project-badge-tag">{project.status}</span>}
       </div>
       <div className="project-info">
@@ -378,6 +402,34 @@ function ProjectCard({ project, large = false }) {
         </div>
       </div>
     </article>
+  );
+}
+
+function ProjectArt({ type, title }) {
+  if (type === 'network') {
+    return (
+      <div className="project-art project-art-network" aria-label={`Arte visual para ${title}`}>
+        <span className="network-node node-a" />
+        <span className="network-node node-b" />
+        <span className="network-node node-c" />
+        <span className="network-node node-d" />
+        <span className="network-line line-a" />
+        <span className="network-line line-b" />
+        <span className="network-line line-c" />
+        <span className="network-label">LAN</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="project-art project-art-repair" aria-label={`Arte visual para ${title}`}>
+      <span className="monitor-frame">
+        <span className="monitor-code" />
+      </span>
+      <span className="tool-orbit orbit-one" />
+      <span className="tool-orbit orbit-two" />
+      <span className="repair-chip">CPU</span>
+    </div>
   );
 }
 

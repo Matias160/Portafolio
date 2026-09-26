@@ -398,11 +398,38 @@ img {
 }
 
 .profile-card {
+  position: relative;
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 1.2rem;
   align-items: center;
   padding: 1.4rem;
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--accent-blue) 34%, var(--border-color));
+  background:
+    linear-gradient(var(--bg-card-solid), var(--bg-card-solid)) padding-box,
+    linear-gradient(135deg, var(--accent-blue), var(--accent-pink), var(--accent-amber)) border-box;
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.32),
+    0 0 42px color-mix(in srgb, var(--accent-blue) 16%, transparent);
+}
+
+.profile-card::before {
+  content: '';
+  position: absolute;
+  inset: -35% auto auto 18%;
+  width: 220px;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent-pink) 38%, transparent), transparent 68%);
+  filter: blur(4px);
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.profile-card > * {
+  position: relative;
+  z-index: 1;
 }
 
 .avatar-placeholder,
@@ -461,6 +488,45 @@ img {
 
 .glass-card {
   padding: 1.25rem;
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 220ms ease,
+    border-color 220ms ease,
+    box-shadow 220ms ease,
+    background 220ms ease;
+}
+
+.glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 18% 0%, color-mix(in srgb, var(--accent-blue) 22%, transparent), transparent 38%),
+    radial-gradient(circle at 100% 90%, color-mix(in srgb, var(--accent-pink) 18%, transparent), transparent 35%);
+  opacity: 0;
+  transition: opacity 220ms ease;
+  pointer-events: none;
+}
+
+.glass-card:hover {
+  transform: translateY(-7px);
+  border-color: color-mix(in srgb, var(--accent-blue) 58%, var(--border-color));
+  background: color-mix(in srgb, var(--bg-card-solid) 82%, var(--accent-blue) 8%);
+  box-shadow:
+    0 28px 70px rgba(0, 0, 0, 0.32),
+    0 0 0 1px color-mix(in srgb, var(--accent-blue) 16%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.glass-card:hover::before {
+  opacity: 1;
+}
+
+.glass-card h3,
+.glass-card .tag-row {
+  position: relative;
+  z-index: 1;
 }
 
 .tag-row {
@@ -518,6 +584,184 @@ img {
 
 .project-card:hover img {
   transform: scale(1.04);
+}
+
+.project-art {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 180px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 25% 20%, color-mix(in srgb, var(--accent-blue) 32%, transparent), transparent 34%),
+    radial-gradient(circle at 80% 78%, color-mix(in srgb, var(--accent-pink) 22%, transparent), transparent 38%),
+    linear-gradient(135deg, #0d1424, #111827 52%, #090d16);
+}
+
+.project-art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 24px 24px;
+  mask-image: radial-gradient(circle at center, #000, transparent 72%);
+}
+
+.monitor-frame {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  width: 46%;
+  aspect-ratio: 1.45;
+  transform: translate(-50%, -50%);
+  border: 2px solid color-mix(in srgb, var(--accent-blue) 78%, #fff 12%);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent),
+    #0a1020;
+  box-shadow:
+    0 0 36px color-mix(in srgb, var(--accent-blue) 28%, transparent),
+    inset 0 0 26px rgba(56, 189, 248, 0.12);
+}
+
+.monitor-frame::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -24%;
+  width: 34%;
+  height: 20%;
+  transform: translateX(-50%);
+  border-radius: 0 0 8px 8px;
+  background: color-mix(in srgb, var(--accent-blue) 36%, #172033);
+}
+
+.monitor-code {
+  position: absolute;
+  inset: 18% 14%;
+  border-radius: 6px;
+  background:
+    linear-gradient(90deg, var(--accent-green) 0 28%, transparent 28% 100%) 0 0 / 100% 18%,
+    linear-gradient(90deg, var(--accent-blue) 0 62%, transparent 62% 100%) 0 50% / 100% 18%,
+    linear-gradient(90deg, var(--accent-pink) 0 42%, transparent 42% 100%) 0 100% / 100% 18%;
+  background-repeat: no-repeat;
+}
+
+.tool-orbit {
+  position: absolute;
+  border: 1px solid color-mix(in srgb, var(--accent-amber) 70%, transparent);
+  border-radius: 999px;
+}
+
+.orbit-one {
+  inset: 18% 22%;
+  transform: rotate(-18deg);
+}
+
+.orbit-two {
+  inset: 26% 32%;
+  transform: rotate(28deg);
+}
+
+.repair-chip {
+  position: absolute;
+  right: 15%;
+  bottom: 14%;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--accent-green) 65%, var(--border-color));
+  border-radius: 8px;
+  color: var(--accent-green);
+  background: rgba(8, 13, 22, 0.72);
+  font-family: var(--font-mono);
+  font-weight: 800;
+  box-shadow: 0 0 24px color-mix(in srgb, var(--accent-green) 24%, transparent);
+}
+
+.network-node {
+  position: absolute;
+  width: 42px;
+  aspect-ratio: 1;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent-blue) 72%, #fff 8%);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent),
+    color-mix(in srgb, var(--bg-card-solid) 78%, var(--accent-blue) 12%);
+  box-shadow:
+    0 0 28px color-mix(in srgb, var(--accent-blue) 26%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.network-node::after {
+  content: '';
+  position: absolute;
+  inset: 12px;
+  border-radius: 50%;
+  background: var(--accent-green);
+  box-shadow: 0 0 18px var(--accent-green);
+}
+
+.node-a {
+  left: 18%;
+  top: 22%;
+}
+
+.node-b {
+  right: 18%;
+  top: 24%;
+}
+
+.node-c {
+  left: 28%;
+  bottom: 18%;
+}
+
+.node-d {
+  right: 28%;
+  bottom: 17%;
+}
+
+.network-line {
+  position: absolute;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent-blue), transparent);
+  transform-origin: left center;
+  box-shadow: 0 0 14px color-mix(in srgb, var(--accent-blue) 55%, transparent);
+}
+
+.line-a {
+  left: 28%;
+  top: 34%;
+  width: 44%;
+  transform: rotate(2deg);
+}
+
+.line-b {
+  left: 31%;
+  top: 43%;
+  width: 35%;
+  transform: rotate(43deg);
+}
+
+.line-c {
+  left: 37%;
+  bottom: 27%;
+  width: 30%;
+  transform: rotate(-2deg);
+}
+
+.network-label {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-shadow: 0 0 22px color-mix(in srgb, var(--accent-blue) 48%, transparent);
 }
 
 .project-badge-tag {

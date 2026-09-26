@@ -68,14 +68,14 @@ export const smallerProjects = [
   },
   {
     title: 'Reparación de computadoras',
-    image: '/pancho-floating.png',
+    art: 'repair',
     description:
       'Experiencia en arreglo y mantenimiento de dispositivos, con conocimientos de hardware y software desarrollados en prácticas profesionalizantes de la Escuela Técnica N.º 5.',
     tags: ['Hardware', 'Software', 'Mantenimiento'],
   },
   {
     title: 'Diseño de redes informáticas',
-    image: '/pancho-floating.png',
+    art: 'network',
     description:
       'Planteamiento y diseño de redes informáticas, topologías, dispositivos necesarios y mantenimiento. Experiencia aplicada en el diseño de redes para dos edificios.',
     tags: ['Redes', 'Topologías', 'Infraestructura'],
