@@ -5,9 +5,11 @@ export const profile = {
   email: 'rivasmatiasmisael@gmail.com',
   github: 'https://github.com/Matias160/Matias-Rivas----Estanga',
   education: 'Escuela Técnica N.º 5, área de Informática',
-  cvPath: '',
+  cvPath: '/cv-matias-rivas.pdf',
+  avatarPath: '/pancho-floating.png',
+  motto: 'El arte de programar no consiste en saber todo, sino en intentar aprender y pensar con criterio.',
   summary:
-    'Estudiante de Informática orientado al desarrollo frontend, con conocimientos de backend y una forma de trabajo apoyada en herramientas de inteligencia artificial como complemento del proceso de desarrollo.',
+    'Estudiante de Informática orientado al desarrollo frontend, con conocimientos de backend, reparación de computadoras, diseño de redes y una forma de trabajo apoyada en herramientas de inteligencia artificial como complemento del proceso de desarrollo.',
   aiStatement:
     'Utilizo IA para programar y desarrollar proyectos como herramienta complementaria. Experimento con modelos y asistentes para explorar ideas, mejorar flujos de trabajo y reforzar mis habilidades técnicas.',
 };
@@ -29,26 +31,26 @@ export const aiTools = ['ChatGPT', 'Codex', 'Claude', 'Gemini', 'Antigravity'];
 
 export const featuredGames = [
   {
-    id: 'juego-uno',
-    title: 'Nombre del juego 01',
-    status: 'Editable',
-    image: '/konica_pop_3d.jpg',
-    tags: ['Juego', 'Frontend', 'Plantilla editable'],
+    id: 'panchos-snake',
+    title: 'Panchos Snake',
+    status: 'Juego destacado',
+    image: '/panchos-snake.png',
+    tags: ['Juego', 'HTML', 'CSS', 'JavaScript'],
     description:
-      'Reemplazá este texto por la descripción del primer juego: objetivo, mecánicas principales, tecnologías utilizadas e imagen del proyecto.',
+      'Adaptación del clásico Snake con temática de panchos. Incluye eventos especiales, potenciadores y nuevas mecánicas para darle más variedad y personalidad al juego original.',
     links: {
       demo: '',
       code: '',
     },
   },
   {
-    id: 'juego-dos',
-    title: 'Nombre del juego 02',
-    status: 'Editable',
-    image: '/nostalgia_alphabet_3d.jpg',
-    tags: ['Juego', 'Interacción', 'Plantilla editable'],
+    id: 'bover-pacman',
+    title: 'Bover Pacman',
+    status: 'Juego destacado',
+    image: '/bover-pacman.png',
+    tags: ['Juego', 'HTML', 'CSS', 'JavaScript'],
     description:
-      'Reemplazá este texto por la descripción del segundo juego: qué hace, cómo se juega, qué aprendiste y qué tecnologías usaste.',
+      'Versión mejorada del clásico Pacman, con aspectos propios, sistema de logros y jefes inspirados en la liga argentina.',
     links: {
       demo: '',
       code: '',
@@ -58,21 +60,24 @@ export const featuredGames = [
 
 export const smallerProjects = [
   {
-    title: 'Proyecto menor 01',
-    image: '/specify_3d_motion.jpg',
-    description: 'Plantilla para un proyecto que valga la pena destacar.',
-    tags: ['Frontend'],
+    title: 'Bocha Stats',
+    image: '/bocha-stats.png',
+    description:
+      'Programa dedicado a estadísticas del fútbol argentino: ligas, equipos, jugadores y campeonatos, con información organizada y actualizada.',
+    tags: ['Python', 'Estadísticas', 'Fútbol argentino'],
   },
   {
-    title: 'Proyecto menor 02',
-    image: '/italo_disco_3d.jpg',
-    description: 'Plantilla editable para completar nombre, imagen y descripción.',
-    tags: ['JavaScript'],
+    title: 'Reparación de computadoras',
+    image: '/pancho-floating.png',
+    description:
+      'Experiencia en arreglo y mantenimiento de dispositivos, con conocimientos de hardware y software desarrollados en prácticas profesionalizantes de la Escuela Técnica N.º 5.',
+    tags: ['Hardware', 'Software', 'Mantenimiento'],
   },
   {
-    title: 'Proyecto menor 03',
-    image: '/konica_pop_3d.jpg',
-    description: 'Espacio reservado para otro trabajo académico o personal.',
-    tags: ['React'],
+    title: 'Diseño de redes informáticas',
+    image: '/pancho-floating.png',
+    description:
+      'Planteamiento y diseño de redes informáticas, topologías, dispositivos necesarios y mantenimiento. Experiencia aplicada en el diseño de redes para dos edificios.',
+    tags: ['Redes', 'Topologías', 'Infraestructura'],
   },
 ];

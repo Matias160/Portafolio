@@ -365,6 +365,16 @@ img {
   font-size: 1.05rem;
 }
 
+.profile-quote {
+  margin: 1.25rem 0 0;
+  max-width: 680px;
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
 .about-grid,
 .cv-layout,
 .contact-card {
@@ -395,19 +405,30 @@ img {
   padding: 1.4rem;
 }
 
-.avatar-placeholder {
+.avatar-placeholder,
+.avatar-image {
   width: 92px;
   aspect-ratio: 1;
+  border-radius: 50%;
+}
+
+.avatar-placeholder {
   display: grid;
   place-items: center;
   border: 1px solid color-mix(in srgb, var(--accent-pink) 44%, var(--border-color));
-  border-radius: 50%;
   background:
     linear-gradient(135deg, rgba(56, 189, 248, 0.18), rgba(244, 114, 182, 0.18)),
     var(--bg-secondary);
   font-family: var(--font-display);
   font-size: 1.5rem;
   font-weight: 800;
+}
+
+.avatar-image {
+  object-fit: cover;
+  border: 1px solid color-mix(in srgb, var(--accent-amber) 55%, var(--border-color));
+  background: var(--bg-secondary);
+  box-shadow: 0 16px 34px rgba(251, 191, 36, 0.18);
 }
 
 .profile-card h3,

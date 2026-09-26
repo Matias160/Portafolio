@@ -170,15 +170,20 @@ function App() {
               <p className="section-tag">01 / Perfil</p>
               <h2 className="section-title">Desarrollo web con foco en interfaces claras</h2>
               <p className="section-subtitle">{profile.aiStatement}</p>
+              <p className="profile-quote">“{profile.motto}”</p>
             </div>
             <div className="profile-card">
-              <div className="avatar-placeholder" aria-label="Espacio para foto personal">
-                MR
-              </div>
+              {profile.avatarPath ? (
+                <img className="avatar-image" src={profile.avatarPath} alt="Pancho flotante, identidad digital de Matías" />
+              ) : (
+                <div className="avatar-placeholder" aria-label="Identidad digital pendiente">
+                  MR
+                </div>
+              )}
               <div>
                 <h3>{profile.name}</h3>
                 <p>{profile.role} · Estudiante de Informática</p>
-                <p className="muted">Foto pequeña preparada para reemplazar por una imagen personal cuando quieras.</p>
+                <p className="muted">Identidad digital: pancho-floating.</p>
               </div>
             </div>
           </div>
