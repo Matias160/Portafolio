@@ -204,7 +204,7 @@ function App() {
               )}
               <div>
                 <h3>{profile.name}</h3>
-                <p>{profile.role} · Estudiante de Informática</p>
+                <p>Desarrollador Frontend · Estudiante de Informática</p>
               </div>
             </div>
           </div>

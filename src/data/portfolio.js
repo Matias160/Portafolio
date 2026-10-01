@@ -1,6 +1,6 @@
 export const profile = {
   name: 'Matías Rivas',
-  role: 'Desarrollador Frontend',
+  role: 'Desarrolla Frontend',
   subtitle: 'con conocimientos de Backend',
   email: 'rivasmatiasmisael@gmail.com',
   github: 'https://github.com/Matias160/Matias-Rivas----Estanga',

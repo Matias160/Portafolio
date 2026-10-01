@@ -65,6 +65,13 @@ body {
     color var(--transition);
 }
 
+html,
+body,
+#root {
+  width: 100%;
+  overflow-x: hidden;
+}
+
 body.theme-light {
   background:
     radial-gradient(circle at 20% 12%, rgba(37, 99, 235, 0.14), transparent 30rem),
@@ -119,6 +126,7 @@ img {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  min-width: 0;
 }
 
 .brand-logo,
@@ -140,6 +148,7 @@ img {
   font-weight: 800;
   letter-spacing: 0;
   white-space: nowrap;
+  min-width: 0;
 }
 
 .nav-links {
@@ -247,10 +256,11 @@ img {
 .hero-title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(3.2rem, 9vw, 7rem);
+  font-size: clamp(2.65rem, 8.4vw, 7rem);
   line-height: 0.95;
   letter-spacing: 0;
   text-transform: uppercase;
+  overflow-wrap: anywhere;
 }
 
 .hero-title span {
@@ -400,7 +410,7 @@ img {
 .profile-card {
   position: relative;
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 1.2rem;
   align-items: center;
   padding: 1.4rem;
@@ -557,6 +567,10 @@ img {
     transform var(--transition),
     border-color var(--transition),
     box-shadow var(--transition);
+}
+
+.project-card-large {
+  min-width: 0;
 }
 
 .project-card:hover {
@@ -779,6 +793,11 @@ img {
 
 .project-info {
   padding: 1.15rem;
+  min-width: 0;
+}
+
+.project-info p {
+  overflow-wrap: anywhere;
 }
 
 .timeline-card {
@@ -837,6 +856,7 @@ img {
 .contact-form {
   display: grid;
   gap: 1rem;
+  min-width: 0;
 }
 
 .form-group {
@@ -946,7 +966,30 @@ img {
 }
 
 @media (max-width: 1100px) {
+  .site-header {
+    position: sticky;
+  }
+
+  .header-container {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .brand-logo,
+  .control-btn {
+    flex: 0 0 auto;
+  }
+
   .nav-links {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-radius: 18px;
+  }
+
+  .nav-links::-webkit-scrollbar {
     display: none;
   }
 
@@ -960,6 +1003,10 @@ img {
   .minor-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .featured-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 760px) {
@@ -969,7 +1016,37 @@ img {
   }
 
   .hero-section {
-    padding-top: 7rem;
+    min-height: auto;
+    padding: 4.5rem 1rem 3.5rem;
+    align-items: start;
+  }
+
+  .hero-content {
+    text-align: left;
+  }
+
+  .hero-badge {
+    font-size: 0.7rem;
+    line-height: 1.35;
+    white-space: normal;
+  }
+
+  .hero-title {
+    font-size: clamp(2.35rem, 14vw, 4rem);
+    line-height: 1;
+  }
+
+  .hero-description {
+    font-size: 1rem;
+  }
+
+  .hero-actions,
+  .hero-stats {
+    justify-content: flex-start;
+  }
+
+  .hero-actions .btn {
+    width: 100%;
   }
 
   .featured-grid,
@@ -979,17 +1056,40 @@ img {
   }
 
   .profile-card {
-    grid-template-columns: 1fr;
+    grid-template-columns: auto minmax(0, 1fr);
   }
 
   .section {
     padding: 4.5rem 0;
   }
+
+  .section-title {
+    font-size: clamp(2rem, 11vw, 3rem);
+  }
+
+  .project-thumb,
+  .minor-grid .project-thumb {
+    aspect-ratio: 16 / 10;
+  }
+
+  .contact-actions .link-button {
+    width: 100%;
+    justify-content: center;
+    overflow-wrap: anywhere;
+  }
+
+  .cv-preview iframe {
+    height: 430px;
+  }
 }
 
 @media (max-width: 460px) {
+  .site-header {
+    padding: 0.65rem 0;
+  }
+
   .brand-logo span {
-    max-width: 126px;
+    max-width: 190px;
     overflow: hidden;
     text-overflow: ellipsis;
   }
@@ -999,6 +1099,50 @@ img {
   }
 
   .hero-title {
-    font-size: 2.8rem;
+    font-size: clamp(2.15rem, 13vw, 3.15rem);
+  }
+
+  .profile-card {
+    grid-template-columns: 1fr;
+    text-align: center;
+    justify-items: center;
+  }
+
+  .avatar-image,
+  .avatar-placeholder {
+    width: 108px;
+  }
+
+  .tag {
+    font-size: 0.78rem;
+  }
+
+  .project-info {
+    padding: 1rem;
+  }
+
+  .timeline-card,
+  .contact-card {
+    padding: 1.1rem;
+  }
+
+  .footer-content {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 360px) {
+  .container,
+  .header-container {
+    width: min(100% - 0.75rem, 1200px);
+  }
+
+  .nav-link {
+    padding: 0.48rem 0.62rem;
+    font-size: 0.82rem;
+  }
+
+  .hero-title {
+    font-size: 2rem;
   }
 }
