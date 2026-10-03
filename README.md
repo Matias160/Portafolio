@@ -27,6 +27,10 @@ Ahí se pueden cambiar:
 - Proyectos menores.
 - Ruta del CV.
 
+## Hosting y base de datos
+
+El portfolio está preparado para publicarse en ChatGPT Sites con una base de datos D1 disponible mediante el binding `DB`. La versión visible funciona como sitio estático para mantener carga rápida y estabilidad, y el host permite sumar rutas backend para guardar y leer información editable del portfolio cuando sea necesario.
+
 ## Agregar CV
 
 No se encontró un CV dentro del proyecto. Para activarlo:
@@ -47,4 +51,5 @@ La página mostrará la vista previa y habilitará la descarga automáticamente.
 - Hooks, eventos e interacción.
 - Formulario con validación accesible y feedback propio sin `alert`.
 - Proyectos como plantillas editables.
+- Hosting preparado con base de datos D1 (`DB`).
 - README del proyecto.
