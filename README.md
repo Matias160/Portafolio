@@ -29,7 +29,7 @@ Ahí se pueden cambiar:
 
 ## Hosting y base de datos
 
-El portfolio está preparado para publicarse en ChatGPT Sites con una base de datos D1 disponible mediante el binding `DB`. La versión visible funciona como sitio estático para mantener carga rápida y estabilidad, y el host permite sumar rutas backend para guardar y leer información editable del portfolio cuando sea necesario.
+El portfolio está preparado para publicarse en ChatGPT Sites con una base de datos D1 disponible mediante el binding `DB`. El build genera un Worker que sirve la página y expone `/api/portfolio`, una ruta que lee la información del portfolio desde D1 y usa el contenido local como respaldo.
 
 ## Agregar CV
 

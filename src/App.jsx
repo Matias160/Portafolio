@@ -13,7 +13,13 @@ import {
 } from 'lucide-react';
 import { initHeroScene } from './hero-scene.js';
 import { useTheme } from './hooks/useTheme.js';
-import { aiTools, featuredGames, profile, smallerProjects, technologies } from './data/portfolio.js';
+import {
+  aiTools as fallbackAiTools,
+  featuredGames as fallbackFeaturedGames,
+  profile as fallbackProfile,
+  smallerProjects as fallbackSmallerProjects,
+  technologies as fallbackTechnologies,
+} from './data/portfolio.js';
 
 const navItems = [
   ['Inicio', '#inicio'],
@@ -26,10 +32,18 @@ const navItems = [
 
 function App() {
   const { theme, setTheme } = useTheme();
+  const [portfolioContent, setPortfolioContent] = useState({
+    aiTools: fallbackAiTools,
+    featuredGames: fallbackFeaturedGames,
+    profile: fallbackProfile,
+    smallerProjects: fallbackSmallerProjects,
+    technologies: fallbackTechnologies,
+  });
   const [isScrolled, setIsScrolled] = useState(false);
   const [toast, setToast] = useState('');
   const [formState, setFormState] = useState({ name: '', email: '', message: '' });
   const [formErrors, setFormErrors] = useState({});
+  const { aiTools, featuredGames, profile, smallerProjects } = portfolioContent;
 
   const hasCv = Boolean(profile.cvPath);
   const isLight = theme === 'theme-light';
@@ -48,6 +62,33 @@ function App() {
   }, []);
 
   useEffect(() => {
+    let isMounted = true;
+
+    async function loadPortfolioContent() {
+      try {
+        const response = await fetch('/api/portfolio', {
+          headers: { Accept: 'application/json' },
+        });
+
+        if (!response.ok) return;
+
+        const remoteContent = await response.json();
+        if (isMounted && remoteContent?.profile) {
+          setPortfolioContent((current) => ({ ...current, ...remoteContent }));
+        }
+      } catch {
+        // The local data keeps the portfolio complete when the backend is unavailable.
+      }
+    }
+
+    loadPortfolioContent();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
     if (!toast) return undefined;
     const timer = window.setTimeout(() => setToast(''), 3600);
     return () => window.clearTimeout(timer);
@@ -59,7 +100,7 @@ function App() {
       { title: 'Backend y datos', items: ['Python', 'SQL', 'PHP', 'Java', 'C++'] },
       { title: 'Herramientas IA', items: aiTools },
     ],
-    [],
+    [aiTools],
   );
 
   function toggleTheme() {
