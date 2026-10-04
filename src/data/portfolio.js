@@ -29,6 +29,19 @@ export const technologies = [
 
 export const aiTools = ['ChatGPT', 'Codex', 'Claude', 'Gemini', 'Antigravity'];
 
+export const educationItems = [
+  {
+    title: 'Escuela Técnica N.º 5, área de Informática',
+    description: 'Conocimientos y formación técnica.',
+    icon: 'graduation',
+  },
+  {
+    title: 'Prácticas profesionalizantes de reparación de hardware',
+    description: 'Conocimientos sobre reparación de notebooks y otros dispositivos.',
+    icon: 'computer',
+  },
+];
+
 export const featuredGames = [
   {
     id: 'panchos-snake',

@@ -54,6 +54,7 @@ const portfolioContent = {
   profile: portfolioModule.profile,
   technologies: portfolioModule.technologies,
   aiTools: portfolioModule.aiTools,
+  educationItems: portfolioModule.educationItems,
   featuredGames: portfolioModule.featuredGames,
   smallerProjects: portfolioModule.smallerProjects,
 };
@@ -72,6 +73,46 @@ function jsonResponse(body, init = {}) {
   });
 }
 
+function isAuthorized(request, env) {
+  const expectedKey = env.PORTFOLIO_EDIT_KEY;
+  return Boolean(expectedKey) && request.headers.get("x-portfolio-key") === expectedKey;
+}
+
+function normalizeProject(project, index) {
+  return {
+    id: String(project?.id || project?.title || "project-" + index),
+    title: String(project?.title || "Proyecto sin título").slice(0, 90),
+    status: String(project?.status || "").slice(0, 40),
+    image: String(project?.image || "").slice(0, 500),
+    art: String(project?.art || "").slice(0, 40),
+    description: String(project?.description || "").slice(0, 700),
+    tags: Array.isArray(project?.tags) ? project.tags.map((tag) => String(tag).slice(0, 40)).slice(0, 8) : [],
+    links: project?.links && typeof project.links === "object" ? project.links : {},
+  };
+}
+
+function normalizePortfolio(content) {
+  const source = content && typeof content === "object" ? content : {};
+  return {
+    profile: { ...defaultPortfolio.profile, ...(source.profile || {}) },
+    technologies: Array.isArray(source.technologies) ? source.technologies.map(String).slice(0, 24) : defaultPortfolio.technologies,
+    aiTools: Array.isArray(source.aiTools) ? source.aiTools.map(String).slice(0, 16) : defaultPortfolio.aiTools,
+    educationItems: Array.isArray(source.educationItems)
+      ? source.educationItems.map((item) => ({
+          title: String(item?.title || "Formación").slice(0, 120),
+          description: String(item?.description || "").slice(0, 500),
+          icon: String(item?.icon || "graduation").slice(0, 30),
+        })).slice(0, 12)
+      : defaultPortfolio.educationItems,
+    featuredGames: Array.isArray(source.featuredGames)
+      ? source.featuredGames.map(normalizeProject).slice(0, 8)
+      : defaultPortfolio.featuredGames,
+    smallerProjects: Array.isArray(source.smallerProjects)
+      ? source.smallerProjects.map(normalizeProject).slice(0, 12)
+      : defaultPortfolio.smallerProjects,
+  };
+}
+
 async function readPortfolio(env) {
   if (!env.DB) return defaultPortfolio;
 
@@ -83,7 +124,7 @@ async function readPortfolio(env) {
     .bind("main")
     .first();
 
-  if (row?.content) return JSON.parse(row.content);
+  if (row?.content) return normalizePortfolio(JSON.parse(row.content));
 
   await env.DB.prepare(
     "INSERT INTO portfolio_content (id, content, updated_at) VALUES (?, ?, ?)"
@@ -91,7 +132,25 @@ async function readPortfolio(env) {
     .bind("main", JSON.stringify(defaultPortfolio), new Date().toISOString())
     .run();
 
-  return defaultPortfolio;
+  return normalizePortfolio(defaultPortfolio);
+}
+
+async function writePortfolio(env, content) {
+  if (!env.DB) throw new Error("D1 binding is unavailable.");
+
+  const normalizedContent = normalizePortfolio(content);
+
+  await env.DB.prepare(
+    "CREATE TABLE IF NOT EXISTS portfolio_content (id TEXT PRIMARY KEY, content TEXT NOT NULL, updated_at TEXT NOT NULL)"
+  ).run();
+
+  await env.DB.prepare(
+    "INSERT INTO portfolio_content (id, content, updated_at) VALUES (?, ?, ?) ON CONFLICT(id) DO UPDATE SET content = excluded.content, updated_at = excluded.updated_at"
+  )
+    .bind("main", JSON.stringify(normalizedContent), new Date().toISOString())
+    .run();
+
+  return normalizedContent;
 }
 
 function serveStatic(pathname) {
@@ -114,8 +173,24 @@ export default {
       return jsonResponse(await readPortfolio(env));
     }
 
+    if (url.pathname === "/api/portfolio/check-key" && request.method === "POST") {
+      if (!isAuthorized(request, env)) return jsonResponse({ ok: false }, { status: 401 });
+      return jsonResponse({ ok: true });
+    }
+
+    if (url.pathname === "/api/portfolio" && request.method === "PUT") {
+      if (!isAuthorized(request, env)) return jsonResponse({ error: "Clave incorrecta." }, { status: 401 });
+      const content = await request.json();
+      return jsonResponse(await writePortfolio(env, content));
+    }
+
     if (url.pathname === "/api/portfolio/status" && request.method === "GET") {
-      return jsonResponse({ database: Boolean(env.DB), storage: "D1", editableRecord: "portfolio_content.main" });
+      return jsonResponse({
+        database: Boolean(env.DB),
+        editorKeyConfigured: Boolean(env.PORTFOLIO_EDIT_KEY),
+        storage: "D1",
+        editableRecord: "portfolio_content.main"
+      });
     }
 
     return serveStatic(url.pathname === "/" ? "/index.html" : url.pathname);
