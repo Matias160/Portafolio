@@ -963,7 +963,9 @@ img {
 
 .editor-panel {
   width: min(100%, 980px);
-  max-height: min(92svh, 820px);
+  height: min(92dvh, 820px);
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--accent-blue) 32%, var(--border-color));
   border-radius: var(--radius-lg);
@@ -1025,9 +1027,12 @@ img {
 .editor-content {
   display: grid;
   gap: 1rem;
-  max-height: calc(min(92svh, 820px) - 78px);
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: auto;
   padding: 1rem;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 
 .editor-section {
@@ -1094,9 +1099,13 @@ img {
 
 .editor-actions {
   position: sticky;
-  bottom: -1rem;
-  padding: 1rem 0 0;
-  background: linear-gradient(180deg, transparent, var(--bg-card-solid) 34%);
+  bottom: 0;
+  z-index: 2;
+  margin: 0 -1rem -1rem;
+  padding: 1rem;
+  border-top: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--bg-card-solid) 96%, transparent);
+  backdrop-filter: blur(16px);
 }
 
 .reveal {
@@ -1258,7 +1267,7 @@ img {
   }
 
   .editor-panel {
-    max-height: 94svh;
+    height: 94dvh;
     border-radius: 18px 18px 12px 12px;
   }
 
@@ -1273,6 +1282,8 @@ img {
   .editor-actions {
     align-items: stretch;
     flex-direction: column;
+    margin: 0 -0.9rem -0.9rem;
+    padding: 0.8rem 0.9rem calc(0.8rem + env(safe-area-inset-bottom));
   }
 
   .editor-actions .btn,

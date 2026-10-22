@@ -146,6 +146,8 @@ function App() {
 
   function closeEditor() {
     setIsEditorOpen(false);
+    setIsEditorUnlocked(false);
+    setEditKey('');
     setEditorError('');
   }
 
