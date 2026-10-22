@@ -1116,6 +1116,105 @@ img {
   margin-bottom: 0.65rem;
 }
 
+.back-to-top {
+  position: fixed;
+  z-index: 20;
+  right: max(1.25rem, env(safe-area-inset-right));
+  bottom: max(1.25rem, env(safe-area-inset-bottom));
+  display: grid;
+  width: 48px;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--accent-blue) 50%, var(--border-color));
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--bg-card-solid) 88%, transparent);
+  color: var(--text-primary);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(12px);
+  cursor: pointer;
+  transition: transform var(--transition), border-color var(--transition), background var(--transition);
+}
+
+.back-to-top:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent-blue);
+  background: var(--bg-card-solid);
+}
+
+.back-to-top:focus-visible,
+.confirm-dialog button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent-blue) 70%, white);
+  outline-offset: 3px;
+}
+
+.confirm-backdrop {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(3, 7, 18, 0.72);
+  backdrop-filter: blur(8px);
+  animation: fadeIn 150ms ease both;
+}
+
+.confirm-dialog {
+  width: min(100%, 440px);
+  padding: clamp(1.25rem, 5vw, 2rem);
+  border: 1px solid color-mix(in srgb, var(--accent-pink) 32%, var(--border-color));
+  border-radius: var(--radius-lg);
+  background: var(--bg-card-solid);
+  box-shadow: var(--shadow);
+  animation: reveal 180ms ease both;
+}
+
+.confirm-icon {
+  display: grid;
+  width: 42px;
+  aspect-ratio: 1;
+  place-items: center;
+  margin-bottom: 1rem;
+  border: 1px solid color-mix(in srgb, var(--accent-pink) 30%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent-pink) 12%, transparent);
+  color: var(--accent-pink);
+}
+
+.confirm-dialog h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  line-height: 1.25;
+}
+
+.confirm-dialog p {
+  margin: 0.65rem 0 1.4rem;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
+
+.confirm-delete-btn {
+  border: 1px solid color-mix(in srgb, #ef4444 65%, transparent);
+  background: #b91c1c;
+  color: white;
+}
+
+.confirm-delete-btn:hover {
+  background: #991b1b;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 .reveal {
   animation: reveal 720ms ease both;
 }
@@ -1149,6 +1248,22 @@ img {
     scroll-behavior: auto !important;
     animation-duration: 1ms !important;
     transition-duration: 1ms !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .back-to-top {
+    right: max(0.8rem, env(safe-area-inset-right));
+    bottom: max(0.8rem, env(safe-area-inset-bottom));
+    width: 44px;
+  }
+
+  .confirm-actions {
+    flex-direction: column-reverse;
+  }
+
+  .confirm-actions .btn {
+    width: 100%;
   }
 }
 

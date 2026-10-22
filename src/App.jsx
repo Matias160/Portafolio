@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowDownToLine,
   ArrowRight,
+  ArrowUp,
   Code2,
   Github,
   GraduationCap,
@@ -58,6 +59,7 @@ function App() {
     technologies: fallbackTechnologies,
   });
   const [isScrolled, setIsScrolled] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState(null);
   const [toast, setToast] = useState('');
   const [formState, setFormState] = useState({ name: '', email: '', message: '' });
   const [formErrors, setFormErrors] = useState({});
@@ -201,12 +203,29 @@ function App() {
 
   function removeProject(group, index) {
     const title = editorDraft[group][index]?.title || 'este proyecto';
-    if (!window.confirm(`¿Querés eliminar “${title}”? Esta acción se aplicará cuando guardes los cambios.`)) return;
+    setDeleteConfirmation({ type: 'project', group, index, title });
+  }
 
+  function removeEducationItem(index) {
+    const title = editorDraft.educationItems[index]?.title || 'este elemento';
+    setDeleteConfirmation({ type: 'education', index, title });
+  }
+
+  function confirmDelete() {
+    if (!deleteConfirmation) return;
+    const { type, group, index } = deleteConfirmation;
+    if (type === 'project') {
     setEditorDraft((current) => ({
       ...current,
       [group]: current[group].filter((_, itemIndex) => itemIndex !== index),
     }));
+    } else {
+    setEditorDraft((current) => ({
+      ...current,
+      educationItems: current.educationItems.filter((_, itemIndex) => itemIndex !== index),
+    }));
+    }
+    setDeleteConfirmation(null);
   }
 
   function updateEducation(index, field, value) {
@@ -224,16 +243,6 @@ function App() {
         ...current.educationItems,
         { title: 'Nuevo item de formación', description: 'Descripción breve.', icon: 'graduation' },
       ],
-    }));
-  }
-
-  function removeEducationItem(index) {
-    const title = editorDraft.educationItems[index]?.title || 'este elemento';
-    if (!window.confirm(`¿Querés eliminar “${title}”? Esta acción se aplicará cuando guardes los cambios.`)) return;
-
-    setEditorDraft((current) => ({
-      ...current,
-      educationItems: current.educationItems.filter((_, itemIndex) => itemIndex !== index),
     }));
   }
 
@@ -618,6 +627,36 @@ function App() {
           <span>Portfolio en español · React 19 + Vite</span>
         </div>
       </footer>
+
+      {isScrolled && (
+        <button
+          className="back-to-top"
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          aria-label="Volver arriba"
+          title="Volver arriba"
+        >
+          <ArrowUp size={20} aria-hidden="true" />
+        </button>
+      )}
+
+      {deleteConfirmation && (
+        <div className="confirm-backdrop" onMouseDown={(event) => {
+          if (event.target === event.currentTarget) setDeleteConfirmation(null);
+        }}>
+          <section className="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="delete-dialog-title" aria-describedby="delete-dialog-description">
+            <span className="confirm-icon"><Trash2 size={20} aria-hidden="true" /></span>
+            <h2 id="delete-dialog-title">¿Eliminar este elemento?</h2>
+            <p id="delete-dialog-description">
+              Se quitará <strong>{deleteConfirmation.title}</strong> del borrador. El cambio se aplicará al guardar.
+            </p>
+            <div className="confirm-actions">
+              <button className="btn btn-secondary" type="button" onClick={() => setDeleteConfirmation(null)}>Cancelar</button>
+              <button className="btn confirm-delete-btn" type="button" onClick={confirmDelete}>Eliminar</button>
+            </div>
+          </section>
+        </div>
+      )}
 
       {toast && (
         <div className="toast" role="status" aria-live="polite">
