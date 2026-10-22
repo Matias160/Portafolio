@@ -1098,14 +1098,22 @@ img {
 }
 
 .editor-actions {
-  position: sticky;
-  bottom: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.editor-footer {
+  position: relative;
   z-index: 2;
-  margin: 0 -1rem -1rem;
-  padding: 1rem;
+  flex: 0 0 auto;
+  padding: 0.85rem 1rem;
   border-top: 1px solid var(--border-color);
   background: color-mix(in srgb, var(--bg-card-solid) 96%, transparent);
   backdrop-filter: blur(16px);
+}
+
+.editor-footer .form-error {
+  margin-bottom: 0.65rem;
 }
 
 .reveal {
@@ -1278,12 +1286,18 @@ img {
   }
 
   .editor-section-head,
-  .editor-item-heading,
+  .editor-item-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .editor-footer {
+    padding: 0.75rem 0.9rem calc(0.75rem + env(safe-area-inset-bottom));
+  }
+
   .editor-actions {
     align-items: stretch;
     flex-direction: column;
-    margin: 0 -0.9rem -0.9rem;
-    padding: 0.8rem 0.9rem calc(0.8rem + env(safe-area-inset-bottom));
   }
 
   .editor-actions .btn,

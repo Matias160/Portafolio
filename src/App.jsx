@@ -61,6 +61,7 @@ function App() {
   const [toast, setToast] = useState('');
   const [formState, setFormState] = useState({ name: '', email: '', message: '' });
   const [formErrors, setFormErrors] = useState({});
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isEditorUnlocked, setIsEditorUnlocked] = useState(false);
   const [editKey, setEditKey] = useState('');
@@ -199,6 +200,9 @@ function App() {
   }
 
   function removeProject(group, index) {
+    const title = editorDraft[group][index]?.title || 'este proyecto';
+    if (!window.confirm(`¿Querés eliminar “${title}”? Esta acción se aplicará cuando guardes los cambios.`)) return;
+
     setEditorDraft((current) => ({
       ...current,
       [group]: current[group].filter((_, itemIndex) => itemIndex !== index),
@@ -224,6 +228,9 @@ function App() {
   }
 
   function removeEducationItem(index) {
+    const title = editorDraft.educationItems[index]?.title || 'este elemento';
+    if (!window.confirm(`¿Querés eliminar “${title}”? Esta acción se aplicará cuando guardes los cambios.`)) return;
+
     setEditorDraft((current) => ({
       ...current,
       educationItems: current.educationItems.filter((_, itemIndex) => itemIndex !== index),
@@ -266,29 +273,59 @@ function App() {
 
   function validateForm() {
     const errors = {};
-    if (!formState.name.trim()) errors.name = 'Escribí tu nombre para poder identificar el mensaje.';
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formState.email)) {
-      errors.email = 'Ingresá un email válido.';
-    }
-    if (formState.message.trim().length < 12) {
-      errors.message = 'El mensaje necesita al menos 12 caracteres.';
-    }
+    const name = formState.name.trim();
+    const email = formState.email.trim();
+    const message = formState.message.trim();
+
+    if (name.length < 2) errors.name = 'El nombre debe tener al menos 2 caracteres.';
+    else if (name.length > 80) errors.name = 'El nombre no puede superar los 80 caracteres.';
+    else if (/[\u0000-\u001f\u007f]/.test(name)) errors.name = 'El nombre contiene caracteres no válidos.';
+
+    const emailParts = email.split('@');
+    const [localPart, domain] = emailParts;
+    const domainLabels = domain?.split('.') ?? [];
+    const validEmail =
+      email.length <= 254 &&
+      emailParts.length === 2 &&
+      localPart.length > 0 &&
+      localPart.length <= 64 &&
+      /^[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+$/i.test(localPart) &&
+      !localPart.startsWith('.') &&
+      !localPart.endsWith('.') &&
+      !localPart.includes('..') &&
+      domainLabels.length >= 2 &&
+      domainLabels.every((label) =>
+        label.length > 0 && label.length <= 63 && /^[A-Z0-9](?:[A-Z0-9-]*[A-Z0-9])?$/i.test(label),
+      ) &&
+      domainLabels.at(-1).length >= 2;
+    if (!validEmail) errors.email = 'Ingresá un correo válido, por ejemplo nombre@dominio.com.';
+
+    if (message.length < 20) errors.message = 'El mensaje debe tener al menos 20 caracteres.';
+    else if (message.length > 2000) errors.message = 'El mensaje no puede superar los 2000 caracteres.';
+    else if (!/[\p{L}\p{N}]/u.test(message)) errors.message = 'Escribí un mensaje con texto.';
+
     return errors;
   }
 
   async function submitForm(event) {
     event.preventDefault();
+    if (isSendingMessage) return;
+
     const errors = validateForm();
     setFormErrors(errors);
 
     if (Object.keys(errors).length > 0) {
       setToast('Revisá los campos marcados antes de enviar.');
+      document.querySelector(`[name="${Object.keys(errors)[0]}"]`)?.focus();
       return;
     }
-
+    setIsSendingMessage(true);
     setToast('Enviando mensaje...');
 
+    let timeoutId;
     try {
+      const controller = new AbortController();
+      timeoutId = window.setTimeout(() => controller.abort(), 15000);
       const response = await fetch(`https://formsubmit.co/ajax/${profile.email}`, {
         method: 'POST',
         headers: {
@@ -296,22 +333,33 @@ function App() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: formState.name,
-          email: formState.email,
-          message: formState.message,
+          name: formState.name.trim(),
+          email: formState.email.trim(),
+          message: formState.message.trim(),
+          _replyto: formState.email.trim(),
           _subject: 'Nuevo contacto desde el portfolio',
           _template: 'table',
-          _captcha: 'false',
         }),
+        signal: controller.signal,
       });
+      const result = await response.json().catch(() => null);
 
-      if (!response.ok) throw new Error('No se pudo enviar el mensaje.');
+      if (!response.ok || !result || (result.success !== true && result.success !== 'true')) {
+        throw new Error(result?.message || 'El servicio no aceptó el mensaje.');
+      }
 
-      setToast('Mensaje enviado. Revisá tu casilla de email.');
+      setToast('Mensaje aceptado para envío. Revisá tu correo y spam.');
       setFormState({ name: '', email: '', message: '' });
-    } catch {
-      setToast('No se pudo enviar directo. Copié tu email para escribir manualmente.');
-      navigator.clipboard.writeText(profile.email);
+      setFormErrors({});
+    } catch (error) {
+      setToast(
+        error.name === 'AbortError'
+          ? 'El envío tardó demasiado. Revisá tu conexión e intentá de nuevo.'
+          : 'No se pudo confirmar el envío. Intentá de nuevo o escribime por email directo.',
+      );
+    } finally {
+      window.clearTimeout(timeoutId);
+      setIsSendingMessage(false);
     }
   }
 
@@ -527,6 +575,10 @@ function App() {
                 error={formErrors.name}
                 onChange={updateField}
                 placeholder="Tu nombre"
+                autoComplete="name"
+                minLength={2}
+                maxLength={80}
+                required
               />
               <Field
                 label="Email"
@@ -536,6 +588,9 @@ function App() {
                 error={formErrors.email}
                 onChange={updateField}
                 placeholder="tu@email.com"
+                autoComplete="email"
+                maxLength={254}
+                required
               />
               <Field
                 label="Mensaje"
@@ -544,10 +599,13 @@ function App() {
                 error={formErrors.message}
                 onChange={updateField}
                 placeholder="Contame qué necesitás..."
+                minLength={20}
+                maxLength={2000}
+                required
                 multiline
               />
-              <button className="btn btn-primary btn-full" type="submit">
-                Enviar mensaje <Send size={18} aria-hidden="true" />
+              <button className="btn btn-primary btn-full" type="submit" disabled={isSendingMessage} aria-busy={isSendingMessage}>
+                {isSendingMessage ? 'Enviando...' : 'Enviar mensaje'} <Send size={18} aria-hidden="true" />
               </button>
             </form>
           </div>
@@ -650,7 +708,8 @@ function PortfolioEditor({
             </button>
           </form>
         ) : (
-          <div className="editor-content">
+          <>
+            <div className="editor-content">
             <EditorSection
               title="Tecnologías y herramientas"
               description="Editá las listas separando cada item con coma."
@@ -731,18 +790,19 @@ function PortfolioEditor({
                 </article>
               ))}
             </EditorSection>
-
-            {error && <p className="form-error">{error}</p>}
-
-            <div className="editor-actions">
-              <button className="btn btn-secondary" type="button" onClick={onClose}>
-                Cancelar
-              </button>
-              <button className="btn btn-primary" type="button" onClick={onSave} disabled={isSaving}>
-                <Save size={17} aria-hidden="true" /> {isSaving ? 'Guardando...' : 'Guardar cambios'}
-              </button>
-            </div>
           </div>
+            <div className="editor-footer">
+              {error && <p className="form-error" role="alert">{error}</p>}
+              <div className="editor-actions">
+                <button className="btn btn-secondary" type="button" onClick={onClose}>
+                  Cancelar
+                </button>
+                <button className="btn btn-primary" type="button" onClick={onSave} disabled={isSaving}>
+                  <Save size={17} aria-hidden="true" /> {isSaving ? 'Guardando...' : 'Guardar cambios'}
+                </button>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>
@@ -875,7 +935,20 @@ function ProjectArt({ type, title }) {
   );
 }
 
-function Field({ label, name, value, error, onChange, placeholder, type = 'text', multiline = false }) {
+function Field({
+  label,
+  name,
+  value,
+  error,
+  onChange,
+  placeholder,
+  type = 'text',
+  multiline = false,
+  autoComplete,
+  minLength,
+  maxLength,
+  required = false,
+}) {
   const fieldId = `field-${name}`;
   const errorId = `${fieldId}-error`;
   const props = {
@@ -884,6 +957,10 @@ function Field({ label, name, value, error, onChange, placeholder, type = 'text'
     value,
     onChange,
     placeholder,
+    autoComplete,
+    minLength,
+    maxLength,
+    required,
     'aria-invalid': Boolean(error),
     'aria-describedby': error ? errorId : undefined,
   };
