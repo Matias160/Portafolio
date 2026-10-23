@@ -1,0 +1,9 @@
+name = "portfolio-matias-rivas"
+main = "dist/server/index.js"
+compatibility_date = "2024-09-23"
+
+# Binding con la base de datos SQL D1
+[[d1_databases]]
+binding = "DB"
+database_name = "portfolio-db"
+database_id = "portfolio-db-id"
