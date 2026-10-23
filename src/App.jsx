@@ -3,7 +3,12 @@ import {
   ArrowDownToLine,
   ArrowRight,
   ArrowUp,
+  Briefcase,
+  Check,
   Code2,
+  Cpu,
+  ExternalLink,
+  Gamepad2,
   Github,
   GraduationCap,
   Laptop,
@@ -12,31 +17,108 @@ import {
   Moon,
   Pencil,
   Plus,
+  RotateCcw,
   Save,
-  Send,
   Sparkles,
   Sun,
   Trash2,
+  User,
   X,
 } from 'lucide-react';
 import { initHeroScene } from './hero-scene.js';
 import { useTheme } from './hooks/useTheme.js';
 import {
   aiTools as fallbackAiTools,
+  backendTechnologies as fallbackBackendTechnologies,
   educationItems as fallbackEducationItems,
   featuredGames as fallbackFeaturedGames,
+  frontendTechnologies as fallbackFrontendTechnologies,
   profile as fallbackProfile,
   smallerProjects as fallbackSmallerProjects,
   technologies as fallbackTechnologies,
 } from './data/portfolio.js';
 
+const STORAGE_KEY = 'matias_portfolio_v2';
+
+const defaultPortfolioContent = {
+  profile: fallbackProfile,
+  technologies: fallbackTechnologies,
+  frontendTechnologies: fallbackFrontendTechnologies,
+  backendTechnologies: fallbackBackendTechnologies,
+  aiTools: fallbackAiTools,
+  educationItems: fallbackEducationItems,
+  featuredGames: fallbackFeaturedGames,
+  smallerProjects: fallbackSmallerProjects,
+};
+
+function getStoredOrInitialContent() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && parsed.profile) {
+        const frontend =
+          parsed.frontendTechnologies ||
+          parsed.technologies?.slice(0, 5) ||
+          defaultPortfolioContent.frontendTechnologies;
+        const backend =
+          parsed.backendTechnologies ||
+          parsed.technologies?.slice(5) ||
+          defaultPortfolioContent.backendTechnologies;
+
+        return {
+          ...defaultPortfolioContent,
+          ...parsed,
+          frontendTechnologies: frontend,
+          backendTechnologies: backend,
+          technologies: parsed.technologies || [...frontend, ...backend],
+          featuredGames: (parsed.featuredGames || defaultPortfolioContent.featuredGames).map((p, i) => ({
+            ...p,
+            id: p.id || `game-${i}-${Date.now()}`,
+          })),
+          smallerProjects: (parsed.smallerProjects || defaultPortfolioContent.smallerProjects).map((p, i) => ({
+            ...p,
+            id: p.id || `proj-${i}-${Date.now()}`,
+          })),
+          educationItems: (parsed.educationItems || defaultPortfolioContent.educationItems).map((e, i) => ({
+            ...e,
+            id: e.id || `edu-${i}-${Date.now()}`,
+          })),
+        };
+      }
+    }
+  } catch {
+    // Fallback if localStorage is disabled
+  }
+  return defaultPortfolioContent;
+}
+
+const emptyGame = {
+  id: '',
+  title: 'Nuevo juego',
+  status: 'Juego destacado',
+  image: '',
+  description: 'Descripción breve de la propuesta de juego, mecánicas y controles.',
+  tags: ['Juego', 'JavaScript'],
+  links: { demo: '', code: '' },
+};
+
 const emptyProject = {
+  id: '',
   title: 'Nuevo proyecto',
   status: '',
   image: '',
   art: '',
-  description: 'Descripción del proyecto.',
-  tags: ['HTML', 'CSS', 'JavaScript'],
+  description: 'Descripción del proyecto técnico, herramienta o desarrollo.',
+  tags: ['Desarrollo', 'Web'],
+  links: { demo: '', code: '' },
+};
+
+const emptyEducation = {
+  id: '',
+  title: 'Nueva formación o certificación',
+  description: 'Conocimientos, temas abordados y prácticas realizadas.',
+  icon: 'graduation',
 };
 
 const navItems = [
@@ -50,32 +132,35 @@ const navItems = [
 
 function App() {
   const { theme, setTheme } = useTheme();
-  const [portfolioContent, setPortfolioContent] = useState({
-    aiTools: fallbackAiTools,
-    educationItems: fallbackEducationItems,
-    featuredGames: fallbackFeaturedGames,
-    profile: fallbackProfile,
-    smallerProjects: fallbackSmallerProjects,
-    technologies: fallbackTechnologies,
-  });
+  const [portfolioContent, setPortfolioContent] = useState(getStoredOrInitialContent);
   const [isScrolled, setIsScrolled] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState(null);
   const [toast, setToast] = useState('');
-  const [formState, setFormState] = useState({ name: '', email: '', message: '' });
-  const [formErrors, setFormErrors] = useState({});
-  const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isEditorUnlocked, setIsEditorUnlocked] = useState(false);
   const [editKey, setEditKey] = useState('');
   const [editorDraft, setEditorDraft] = useState(portfolioContent);
   const [editorError, setEditorError] = useState('');
   const [isSavingContent, setIsSavingContent] = useState(false);
-  const { aiTools, educationItems, featuredGames, profile, smallerProjects, technologies } = portfolioContent;
+  const [isUnlocking, setIsUnlocking] = useState(false);
+
+  const {
+    aiTools,
+    educationItems,
+    featuredGames,
+    profile,
+    smallerProjects,
+    frontendTechnologies,
+    backendTechnologies,
+    technologies,
+  } = portfolioContent;
 
   const hasCv = Boolean(profile.cvPath);
   const isLight = theme === 'theme-light';
 
   useEffect(() => {
+    document.title = 'Matias Rivas desarrollador de frontend';
+
     const cleanupHero = initHeroScene();
 
     const onScroll = () => setIsScrolled(window.scrollY > 40);
@@ -101,11 +186,43 @@ function App() {
 
         const remoteContent = await response.json();
         if (isMounted && remoteContent?.profile) {
-          setPortfolioContent((current) => ({ ...current, ...remoteContent }));
-          setEditorDraft((current) => ({ ...current, ...remoteContent }));
+          const frontend =
+            remoteContent.frontendTechnologies ||
+            remoteContent.technologies?.slice(0, 5) ||
+            defaultPortfolioContent.frontendTechnologies;
+          const backend =
+            remoteContent.backendTechnologies ||
+            remoteContent.technologies?.slice(5) ||
+            defaultPortfolioContent.backendTechnologies;
+
+          const merged = {
+            ...defaultPortfolioContent,
+            ...remoteContent,
+            frontendTechnologies: frontend,
+            backendTechnologies: backend,
+            technologies: remoteContent.technologies || [...frontend, ...backend],
+            featuredGames: (remoteContent.featuredGames || defaultPortfolioContent.featuredGames).map((p, i) => ({
+              ...p,
+              id: p.id || `game-${i}-${Date.now()}`,
+            })),
+            smallerProjects: (remoteContent.smallerProjects || defaultPortfolioContent.smallerProjects).map((p, i) => ({
+              ...p,
+              id: p.id || `proj-${i}-${Date.now()}`,
+            })),
+            educationItems: (remoteContent.educationItems || defaultPortfolioContent.educationItems).map((e, i) => ({
+              ...e,
+              id: e.id || `edu-${i}-${Date.now()}`,
+            })),
+          };
+
+          setPortfolioContent(merged);
+          setEditorDraft(merged);
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+          } catch {}
         }
       } catch {
-        // The local data keeps the portfolio complete when the backend is unavailable.
+        // Keeps local / stored data active
       }
     }
 
@@ -122,23 +239,21 @@ function App() {
     return () => window.clearTimeout(timer);
   }, [toast]);
 
+  const activeFrontend = frontendTechnologies || technologies.slice(0, 5);
+  const activeBackend = backendTechnologies || technologies.slice(5);
+
   const groupedStack = useMemo(
     () => [
-      { title: 'Frontend', items: technologies.slice(0, 5) },
-      { title: 'Backend y datos', items: technologies.slice(5) },
+      { title: 'Frontend', items: activeFrontend },
+      { title: 'Backend y datos', items: activeBackend },
       { title: 'Herramientas IA', items: aiTools },
     ],
-    [aiTools, technologies],
+    [activeFrontend, activeBackend, aiTools],
   );
 
   function toggleTheme() {
     setTheme(isLight ? 'theme-dark' : 'theme-light');
     setToast(isLight ? 'Modo noche activado' : 'Modo día activado');
-  }
-
-  function copyEmail() {
-    navigator.clipboard.writeText(profile.email);
-    setToast('Email copiado al portapapeles');
   }
 
   function openEditor() {
@@ -155,8 +270,9 @@ function App() {
   }
 
   async function unlockEditor(event) {
-    event.preventDefault();
+    if (event) event.preventDefault();
     setEditorError('');
+    setIsUnlocking(true);
 
     try {
       const response = await fetch('/api/portfolio/check-key', {
@@ -167,88 +283,155 @@ function App() {
         },
       });
 
-      if (!response.ok) throw new Error('Clave incorrecta.');
+      if (response.status === 401) {
+        setEditorError('Clave incorrecta. Probá de nuevo.');
+        setIsUnlocking(false);
+        return;
+      }
 
       setIsEditorUnlocked(true);
-      setToast('Editor activado');
+      setToast('Editor desbloqueado');
     } catch {
-      setEditorError('Clave incorrecta. Probá de nuevo.');
+      // Offline or local dev environment without backend Worker
+      setIsEditorUnlocked(true);
+      setToast('Editor desbloqueado (modo local)');
+    } finally {
+      setIsUnlocking(false);
     }
   }
 
-  function updateDraftList(path, value) {
-    setEditorDraft((current) => {
-      const next = structuredClone(current);
-      let target = next;
-      for (const key of path.slice(0, -1)) target = target[key];
-      target[path.at(-1)] = value;
-      return next;
-    });
-  }
-
-  function updateProject(group, index, field, value) {
-    setEditorDraft((current) => {
-      const next = structuredClone(current);
-      next[group][index] = { ...next[group][index], [field]: value };
-      return next;
-    });
-  }
-
-  function addProject(group) {
+  function updateDraftProfile(field, value) {
     setEditorDraft((current) => ({
       ...current,
-      [group]: [...current[group], { ...emptyProject, id: `proyecto-${Date.now()}` }],
+      profile: { ...current.profile, [field]: value },
     }));
   }
 
-  function removeProject(group, index) {
-    const title = editorDraft[group][index]?.title || 'este proyecto';
-    setDeleteConfirmation({ type: 'project', group, index, title });
+  function addDraftTech(category, tech) {
+    setEditorDraft((current) => {
+      const list = current[category] || [];
+      if (list.includes(tech)) return current;
+      return {
+        ...current,
+        [category]: [...list, tech],
+      };
+    });
+    setToast(`"${tech}" agregada`);
   }
 
-  function removeEducationItem(index) {
-    const title = editorDraft.educationItems[index]?.title || 'este elemento';
-    setDeleteConfirmation({ type: 'education', index, title });
+  function removeDraftTech(category, tech) {
+    setEditorDraft((current) => ({
+      ...current,
+      [category]: (current[category] || []).filter((item) => item !== tech),
+    }));
+  }
+
+  function updateProject(group, id, field, value) {
+    setEditorDraft((current) => ({
+      ...current,
+      [group]: current[group].map((item) => (item.id === id ? { ...item, [field]: value } : item)),
+    }));
+  }
+
+  function addProject(group) {
+    const isFeatured = group === 'featuredGames';
+    const template = isFeatured ? emptyGame : emptyProject;
+    const newItem = {
+      ...template,
+      id: `${isFeatured ? 'game' : 'proj'}-${Date.now()}`,
+    };
+
+    setEditorDraft((current) => ({
+      ...current,
+      [group]: [newItem, ...current[group]],
+    }));
+    setToast(isFeatured ? 'Nuevo juego destacado agregado' : 'Nuevo proyecto agregado');
+  }
+
+  function requestDeleteProject(group, id, title) {
+    setDeleteConfirmation({
+      type: group,
+      id,
+      title: title || 'este proyecto',
+    });
+  }
+
+  function requestDeleteEducation(id, title) {
+    setDeleteConfirmation({
+      type: 'educationItems',
+      id,
+      title: title || 'este elemento',
+    });
   }
 
   function confirmDelete() {
     if (!deleteConfirmation) return;
-    const { type, group, index } = deleteConfirmation;
-    if (type === 'project') {
-    setEditorDraft((current) => ({
-      ...current,
-      [group]: current[group].filter((_, itemIndex) => itemIndex !== index),
-    }));
-    } else {
-    setEditorDraft((current) => ({
-      ...current,
-      educationItems: current.educationItems.filter((_, itemIndex) => itemIndex !== index),
-    }));
+    const { type, id, title } = deleteConfirmation;
+
+    if (type === 'featuredGames' || type === 'smallerProjects') {
+      setEditorDraft((current) => ({
+        ...current,
+        [type]: current[type].filter((item) => item.id !== id),
+      }));
+    } else if (type === 'educationItems') {
+      setEditorDraft((current) => ({
+        ...current,
+        educationItems: current.educationItems.filter((item) => item.id !== id),
+      }));
     }
+
+    setToast(`"${title}" eliminado del borrador`);
     setDeleteConfirmation(null);
   }
 
-  function updateEducation(index, field, value) {
-    setEditorDraft((current) => {
-      const next = structuredClone(current);
-      next.educationItems[index] = { ...next.educationItems[index], [field]: value };
-      return next;
-    });
+  function updateEducation(id, field, value) {
+    setEditorDraft((current) => ({
+      ...current,
+      educationItems: current.educationItems.map((item) =>
+        item.id === id ? { ...item, [field]: value } : item,
+      ),
+    }));
   }
 
   function addEducationItem() {
+    const newItem = {
+      ...emptyEducation,
+      id: `edu-${Date.now()}`,
+    };
     setEditorDraft((current) => ({
       ...current,
-      educationItems: [
-        ...current.educationItems,
-        { title: 'Nuevo item de formación', description: 'Descripción breve.', icon: 'graduation' },
-      ],
+      educationItems: [newItem, ...current.educationItems],
     }));
+    setToast('Nueva formación agregada');
+  }
+
+  function resetToDefaults() {
+    if (window.confirm('¿Querés restablecer todo el contenido a los valores iniciales? Se perderán las modificaciones no guardadas.')) {
+      setEditorDraft(defaultPortfolioContent);
+      setToast('Borrador restablecido a los valores por defecto');
+    }
   }
 
   async function savePortfolioContent() {
     setIsSavingContent(true);
     setEditorError('');
+
+    const frontend = editorDraft.frontendTechnologies || [];
+    const backend = editorDraft.backendTechnologies || [];
+    const payload = {
+      ...editorDraft,
+      frontendTechnologies: frontend,
+      backendTechnologies: backend,
+      technologies: [...frontend, ...backend],
+    };
+
+    // Save to localStorage immediately
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    } catch {}
+
+    setPortfolioContent(payload);
+    setEditorDraft(payload);
 
     try {
       const response = await fetch('/api/portfolio', {
@@ -257,118 +440,37 @@ function App() {
           'Content-Type': 'application/json',
           'x-portfolio-key': editKey,
         },
-        body: JSON.stringify(editorDraft),
+        body: JSON.stringify(payload),
       });
 
-      if (!response.ok) throw new Error('No se pudo guardar.');
-
-      const savedContent = await response.json();
-      setPortfolioContent(savedContent);
-      setEditorDraft(savedContent);
-      setToast('Cambios guardados en la base de datos');
-      closeEditor();
-    } catch {
-      setEditorError('No se pudieron guardar los cambios. Revisá la clave o intentá otra vez.');
-    } finally {
-      setIsSavingContent(false);
-    }
-  }
-
-  function updateField(event) {
-    const { name, value } = event.target;
-    setFormState((current) => ({ ...current, [name]: value }));
-    setFormErrors((current) => ({ ...current, [name]: '' }));
-  }
-
-  function validateForm() {
-    const errors = {};
-    const name = formState.name.trim();
-    const email = formState.email.trim();
-    const message = formState.message.trim();
-
-    if (name.length < 2) errors.name = 'El nombre debe tener al menos 2 caracteres.';
-    else if (name.length > 80) errors.name = 'El nombre no puede superar los 80 caracteres.';
-    else if (/[\u0000-\u001f\u007f]/.test(name)) errors.name = 'El nombre contiene caracteres no válidos.';
-
-    const emailParts = email.split('@');
-    const [localPart, domain] = emailParts;
-    const domainLabels = domain?.split('.') ?? [];
-    const validEmail =
-      email.length <= 254 &&
-      emailParts.length === 2 &&
-      localPart.length > 0 &&
-      localPart.length <= 64 &&
-      /^[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+$/i.test(localPart) &&
-      !localPart.startsWith('.') &&
-      !localPart.endsWith('.') &&
-      !localPart.includes('..') &&
-      domainLabels.length >= 2 &&
-      domainLabels.every((label) =>
-        label.length > 0 && label.length <= 63 && /^[A-Z0-9](?:[A-Z0-9-]*[A-Z0-9])?$/i.test(label),
-      ) &&
-      domainLabels.at(-1).length >= 2;
-    if (!validEmail) errors.email = 'Ingresá un correo válido, por ejemplo nombre@dominio.com.';
-
-    if (message.length < 20) errors.message = 'El mensaje debe tener al menos 20 caracteres.';
-    else if (message.length > 2000) errors.message = 'El mensaje no puede superar los 2000 caracteres.';
-    else if (!/[\p{L}\p{N}]/u.test(message)) errors.message = 'Escribí un mensaje con texto.';
-
-    return errors;
-  }
-
-  async function submitForm(event) {
-    event.preventDefault();
-    if (isSendingMessage) return;
-
-    const errors = validateForm();
-    setFormErrors(errors);
-
-    if (Object.keys(errors).length > 0) {
-      setToast('Revisá los campos marcados antes de enviar.');
-      document.querySelector(`[name="${Object.keys(errors)[0]}"]`)?.focus();
-      return;
-    }
-    setIsSendingMessage(true);
-    setToast('Enviando mensaje...');
-
-    let timeoutId;
-    try {
-      const controller = new AbortController();
-      timeoutId = window.setTimeout(() => controller.abort(), 15000);
-      const response = await fetch(`https://formsubmit.co/ajax/${profile.email}`, {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: formState.name.trim(),
-          email: formState.email.trim(),
-          message: formState.message.trim(),
-          _replyto: formState.email.trim(),
-          _subject: 'Nuevo contacto desde el portfolio',
-          _template: 'table',
-        }),
-        signal: controller.signal,
-      });
-      const result = await response.json().catch(() => null);
-
-      if (!response.ok || !result || (result.success !== true && result.success !== 'true')) {
-        throw new Error(result?.message || 'El servicio no aceptó el mensaje.');
+      if (response.status === 401) {
+        throw new Error('Clave incorrecta para guardar en la base de datos.');
       }
 
-      setToast('Mensaje aceptado para envío. Revisá tu correo y spam.');
-      setFormState({ name: '', email: '', message: '' });
-      setFormErrors({});
-    } catch (error) {
-      setToast(
-        error.name === 'AbortError'
-          ? 'El envío tardó demasiado. Revisá tu conexión e intentá de nuevo.'
-          : 'No se pudo confirmar el envío. Intentá de nuevo o escribime por email directo.',
-      );
+      if (response.ok) {
+        const savedRemote = await response.json();
+        const updated = { ...payload, ...savedRemote };
+        setPortfolioContent(updated);
+        setEditorDraft(updated);
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        } catch {}
+        setToast('Cambios guardados en la base de datos');
+        closeEditor();
+      } else {
+        setToast('Cambios guardados localmente');
+        closeEditor();
+      }
+    } catch (err) {
+      if (err.message?.includes('Clave incorrecta')) {
+        setEditorError(err.message);
+      } else {
+        // Saved locally even if network/worker is offline
+        setToast('Cambios guardados localmente en tu navegador');
+        closeEditor();
+      }
     } finally {
-      window.clearTimeout(timeoutId);
-      setIsSendingMessage(false);
+      setIsSavingContent(false);
     }
   }
 
@@ -451,7 +553,7 @@ function App() {
               )}
               <div>
                 <h3>{profile.name}</h3>
-                <p>Desarrollador Frontend · Estudiante de Informática</p>
+                <p>{profile.role} · Estudiante de Informática</p>
               </div>
             </div>
           </div>
@@ -486,7 +588,7 @@ function App() {
           <div className="container">
             <div className="section-header">
               <p className="section-tag">03 / Portfolio</p>
-              <h2 className="section-title">Dos juegos destacados y proyectos menores</h2>
+              <h2 className="section-title">Juegos destacados y proyectos técnicos</h2>
               <p className="section-subtitle">
                 Una selección de juegos, herramientas y trabajos técnicos desarrollados durante la formación.
               </p>
@@ -500,7 +602,7 @@ function App() {
 
             <div className="minor-grid">
               {smallerProjects.map((project) => (
-                <ProjectCard key={project.title} project={project} />
+                <ProjectCard key={project.id} project={project} />
               ))}
             </div>
           </div>
@@ -511,7 +613,7 @@ function App() {
             <p className="section-tag">04 / Formación</p>
             <h2 className="section-title">Formación académica</h2>
             {educationItems.map((item) => (
-              <div className="timeline-item" key={item.title}>
+              <div className="timeline-item" key={item.id}>
                 {item.icon === 'computer' ? (
                   <Laptop size={24} aria-hidden="true" />
                 ) : (
@@ -534,7 +636,7 @@ function App() {
               <p className="section-subtitle">
                 {hasCv
                   ? 'El archivo de CV está conectado y puede verse o descargarse.'
-                  : 'No encontré un archivo de CV en el proyecto. Dejé el bloque listo para activarse cuando agregues, por ejemplo, /cv-matias-rivas.pdf en public y completes cvPath.'}
+                  : 'No encontré un archivo de CV en el proyecto. Podés cargar /cv-matias-rivas.pdf en la carpeta public y editar la ruta desde el editor.'}
               </p>
             </div>
             <div className="cv-preview" aria-live="polite">
@@ -562,61 +664,19 @@ function App() {
               <p className="section-tag">06 / Contacto</p>
               <h2 className="section-title">Hablemos de proyectos</h2>
               <p className="section-subtitle">
-                Contacto directo por email y GitHub. El formulario valida los datos y envía el mensaje a mi correo.
+                Podés contactarme directamente por email o visitar mi perfil de GitHub.
               </p>
               <div className="contact-actions">
-                <button className="link-button" type="button" onClick={copyEmail}>
+                <a className="link-button" href={`mailto:${profile.email}`}>
                   <Mail size={18} aria-hidden="true" />
                   {profile.email}
-                </button>
+                </a>
                 <a className="link-button" href={profile.github} target="_blank" rel="noreferrer">
                   <Github size={18} aria-hidden="true" />
                   GitHub
                 </a>
               </div>
             </div>
-
-            <form className="contact-form" noValidate onSubmit={submitForm}>
-              <Field
-                label="Nombre"
-                name="name"
-                value={formState.name}
-                error={formErrors.name}
-                onChange={updateField}
-                placeholder="Tu nombre"
-                autoComplete="name"
-                minLength={2}
-                maxLength={80}
-                required
-              />
-              <Field
-                label="Email"
-                name="email"
-                type="email"
-                value={formState.email}
-                error={formErrors.email}
-                onChange={updateField}
-                placeholder="tu@email.com"
-                autoComplete="email"
-                maxLength={254}
-                required
-              />
-              <Field
-                label="Mensaje"
-                name="message"
-                value={formState.message}
-                error={formErrors.message}
-                onChange={updateField}
-                placeholder="Contame qué necesitás..."
-                minLength={20}
-                maxLength={2000}
-                required
-                multiline
-              />
-              <button className="btn btn-primary btn-full" type="submit" disabled={isSendingMessage} aria-busy={isSendingMessage}>
-                {isSendingMessage ? 'Enviando...' : 'Enviar mensaje'} <Send size={18} aria-hidden="true" />
-              </button>
-            </form>
           </div>
         </section>
       </main>
@@ -641,18 +701,33 @@ function App() {
       )}
 
       {deleteConfirmation && (
-        <div className="confirm-backdrop" onMouseDown={(event) => {
-          if (event.target === event.currentTarget) setDeleteConfirmation(null);
-        }}>
-          <section className="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="delete-dialog-title" aria-describedby="delete-dialog-description">
-            <span className="confirm-icon"><Trash2 size={20} aria-hidden="true" /></span>
+        <div
+          className="confirm-backdrop"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setDeleteConfirmation(null);
+          }}
+        >
+          <section
+            className="confirm-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="delete-dialog-title"
+            aria-describedby="delete-dialog-description"
+          >
+            <span className="confirm-icon">
+              <Trash2 size={20} aria-hidden="true" />
+            </span>
             <h2 id="delete-dialog-title">¿Eliminar este elemento?</h2>
             <p id="delete-dialog-description">
               Se quitará <strong>{deleteConfirmation.title}</strong> del borrador. El cambio se aplicará al guardar.
             </p>
             <div className="confirm-actions">
-              <button className="btn btn-secondary" type="button" onClick={() => setDeleteConfirmation(null)}>Cancelar</button>
-              <button className="btn confirm-delete-btn" type="button" onClick={confirmDelete}>Eliminar</button>
+              <button className="btn btn-secondary" type="button" onClick={() => setDeleteConfirmation(null)}>
+                Cancelar
+              </button>
+              <button className="btn confirm-delete-btn" type="button" onClick={confirmDelete}>
+                Eliminar
+              </button>
             </div>
           </section>
         </div>
@@ -671,16 +746,20 @@ function App() {
           error={editorError}
           isSaving={isSavingContent}
           isUnlocked={isEditorUnlocked}
+          isUnlocking={isUnlocking}
           onAddEducationItem={addEducationItem}
           onAddProject={addProject}
+          onAddTech={addDraftTech}
           onClose={closeEditor}
-          onRemoveEducationItem={removeEducationItem}
-          onRemoveProject={removeProject}
+          onRemoveEducationItem={requestDeleteEducation}
+          onRemoveProject={requestDeleteProject}
+          onRemoveTech={removeDraftTech}
+          onResetToDefaults={resetToDefaults}
           onSave={savePortfolioContent}
           onUnlock={unlockEditor}
-          onUpdateDraftList={updateDraftList}
           onUpdateEducation={updateEducation}
           onUpdateKey={setEditKey}
+          onUpdateProfile={updateDraftProfile}
           onUpdateProject={updateProject}
         />
       )}
@@ -694,32 +773,36 @@ function PortfolioEditor({
   error,
   isSaving,
   isUnlocked,
+  isUnlocking,
   onAddEducationItem,
   onAddProject,
+  onAddTech,
   onClose,
   onRemoveEducationItem,
   onRemoveProject,
+  onRemoveTech,
+  onResetToDefaults,
   onSave,
   onUnlock,
-  onUpdateDraftList,
   onUpdateEducation,
   onUpdateKey,
+  onUpdateProfile,
   onUpdateProject,
 }) {
-  const frontendTech = draft.technologies.slice(0, 5);
-  const backendTech = draft.technologies.slice(5);
+  const [activeTab, setActiveTab] = useState('stack');
 
-  function updateTechnologies(frontend, backend) {
-    onUpdateDraftList(['technologies'], [...frontend, ...backend]);
-  }
+  const frontendCount = draft.frontendTechnologies?.length || 0;
+  const backendCount = draft.backendTechnologies?.length || 0;
+  const aiCount = draft.aiTools?.length || 0;
+  const totalStack = frontendCount + backendCount + aiCount;
 
   return (
     <div className="editor-backdrop" role="dialog" aria-modal="true" aria-labelledby="editor-title">
       <div className="editor-panel">
         <div className="editor-topbar">
           <div>
-            <p className="section-tag">Editor</p>
-            <h2 id="editor-title">Contenido del portfolio</h2>
+            <p className="section-tag">Panel de Control</p>
+            <h2 id="editor-title">Editor de Contenido</h2>
           </div>
           <button className="icon-btn" type="button" onClick={onClose} aria-label="Cerrar editor">
             <X size={18} aria-hidden="true" />
@@ -730,8 +813,8 @@ function PortfolioEditor({
           <form className="unlock-card" onSubmit={onUnlock}>
             <LockKeyhole size={34} aria-hidden="true" />
             <div>
-              <h3>Ingresá la clave</h3>
-              <p>Al desbloquear podés editar proyectos, tecnologías y formación.</p>
+              <h3>Desbloquear editor</h3>
+              <p>Ingresá la clave de edición configurada en el hosting o continuá en modo local.</p>
             </div>
             <input
               type="password"
@@ -742,103 +825,339 @@ function PortfolioEditor({
               autoFocus
             />
             {error && <p className="form-error">{error}</p>}
-            <button className="btn btn-primary btn-full" type="submit">
-              Desbloquear
+            <button className="btn btn-primary btn-full" type="submit" disabled={isUnlocking}>
+              {isUnlocking ? 'Verificando...' : 'Desbloquear'}
             </button>
+
+            <div className="unlock-local-hint">
+              <p>¿Estás probando en local o sin backend configurado?</p>
+              <button
+                type="button"
+                className="unlock-local-btn"
+                onClick={() => onUnlock()}
+              >
+                Continuar en modo local
+              </button>
+            </div>
           </form>
         ) : (
           <>
+            <nav className="editor-tabs" aria-label="Secciones del editor">
+              <button
+                type="button"
+                className={`editor-tab-btn ${activeTab === 'profile' ? 'active' : ''}`}
+                onClick={() => setActiveTab('profile')}
+              >
+                <User size={15} aria-hidden="true" />
+                <span>Perfil</span>
+              </button>
+
+              <button
+                type="button"
+                className={`editor-tab-btn ${activeTab === 'stack' ? 'active' : ''}`}
+                onClick={() => setActiveTab('stack')}
+              >
+                <Cpu size={15} aria-hidden="true" />
+                <span>Stack & IA</span>
+                <span className="editor-badge-counter">{totalStack}</span>
+              </button>
+
+              <button
+                type="button"
+                className={`editor-tab-btn ${activeTab === 'games' ? 'active' : ''}`}
+                onClick={() => setActiveTab('games')}
+              >
+                <Gamepad2 size={15} aria-hidden="true" />
+                <span>Juegos</span>
+                <span className="editor-badge-counter">{draft.featuredGames?.length || 0}</span>
+              </button>
+
+              <button
+                type="button"
+                className={`editor-tab-btn ${activeTab === 'projects' ? 'active' : ''}`}
+                onClick={() => setActiveTab('projects')}
+              >
+                <Briefcase size={15} aria-hidden="true" />
+                <span>Proyectos</span>
+                <span className="editor-badge-counter">{draft.smallerProjects?.length || 0}</span>
+              </button>
+
+              <button
+                type="button"
+                className={`editor-tab-btn ${activeTab === 'education' ? 'active' : ''}`}
+                onClick={() => setActiveTab('education')}
+              >
+                <GraduationCap size={15} aria-hidden="true" />
+                <span>Formación</span>
+                <span className="editor-badge-counter">{draft.educationItems?.length || 0}</span>
+              </button>
+            </nav>
+
             <div className="editor-content">
-            <EditorSection
-              title="Tecnologías y herramientas"
-              description="Editá las listas separando cada item con coma."
-            >
-              <EditorField
-                label="Frontend"
-                value={frontendTech.join(', ')}
-                onChange={(value) => updateTechnologies(splitList(value), backendTech)}
-              />
-              <EditorField
-                label="Backend y datos"
-                value={backendTech.join(', ')}
-                onChange={(value) => updateTechnologies(frontendTech, splitList(value))}
-              />
-              <EditorField
-                label="Herramientas IA"
-                value={draft.aiTools.join(', ')}
-                onChange={(value) => onUpdateDraftList(['aiTools'], splitList(value))}
-              />
-            </EditorSection>
+              {activeTab === 'profile' && (
+                <EditorSection
+                  title="Información Personal y Contacto"
+                  description="Modificá los datos que se muestran en el encabezado, bio y pie del portfolio."
+                >
+                  <div className="editor-grid-2">
+                    <EditorField
+                      label="Nombre completo"
+                      value={draft.profile.name}
+                      onChange={(val) => onUpdateProfile('name', val)}
+                    />
+                    <EditorField
+                      label="Rol / Especialidad"
+                      value={draft.profile.role}
+                      onChange={(val) => onUpdateProfile('role', val)}
+                    />
+                  </div>
 
-            <EditorSection
-              title="Juegos destacados"
-              description="Podés cambiar nombre, imagen, descripción y tecnologías."
-              action={
-                <button className="editor-mini-btn" type="button" onClick={() => onAddProject('featuredGames')}>
-                  <Plus size={15} aria-hidden="true" /> Agregar
-                </button>
-              }
-            >
-              <ProjectEditorList
-                group="featuredGames"
-                projects={draft.featuredGames}
-                onRemoveProject={onRemoveProject}
-                onUpdateProject={onUpdateProject}
-              />
-            </EditorSection>
-
-            <EditorSection
-              title="Proyectos menores"
-              description="La imagen puede ser una ruta del proyecto o un arte: repair / network."
-              action={
-                <button className="editor-mini-btn" type="button" onClick={() => onAddProject('smallerProjects')}>
-                  <Plus size={15} aria-hidden="true" /> Agregar
-                </button>
-              }
-            >
-              <ProjectEditorList
-                group="smallerProjects"
-                projects={draft.smallerProjects}
-                onRemoveProject={onRemoveProject}
-                onUpdateProject={onUpdateProject}
-              />
-            </EditorSection>
-
-            <EditorSection
-              title="Formación académica"
-              description="Usá icono graduation o computer."
-              action={
-                <button className="editor-mini-btn" type="button" onClick={onAddEducationItem}>
-                  <Plus size={15} aria-hidden="true" /> Agregar
-                </button>
-              }
-            >
-              {draft.educationItems.map((item, index) => (
-                <article className="editor-item" key={`${item.title}-${index}`}>
-                  <EditorField label="Título" value={item.title} onChange={(value) => onUpdateEducation(index, 'title', value)} />
                   <EditorField
-                    label="Descripción"
-                    value={item.description}
-                    onChange={(value) => onUpdateEducation(index, 'description', value)}
+                    label="Subtítulo de presentación"
+                    value={draft.profile.subtitle}
+                    onChange={(val) => onUpdateProfile('subtitle', val)}
+                  />
+
+                  <EditorField
+                    label="Resumen biográfico"
+                    value={draft.profile.summary}
+                    onChange={(val) => onUpdateProfile('summary', val)}
                     multiline
                   />
-                  <EditorField label="Icono" value={item.icon} onChange={(value) => onUpdateEducation(index, 'icon', value)} />
-                  <button className="editor-danger-btn" type="button" onClick={() => onRemoveEducationItem(index)}>
-                    <Trash2 size={15} aria-hidden="true" /> Eliminar
-                  </button>
-                </article>
-              ))}
-            </EditorSection>
-          </div>
+
+                  <EditorField
+                    label="Declaración sobre uso de IA"
+                    value={draft.profile.aiStatement}
+                    onChange={(val) => onUpdateProfile('aiStatement', val)}
+                    multiline
+                  />
+
+                  <EditorField
+                    label="Lema / Cita personal"
+                    value={draft.profile.motto}
+                    onChange={(val) => onUpdateProfile('motto', val)}
+                  />
+
+                  <div className="editor-grid-2">
+                    <EditorField
+                      label="Correo electrónico"
+                      value={draft.profile.email}
+                      onChange={(val) => onUpdateProfile('email', val)}
+                    />
+                    <EditorField
+                      label="URL de perfil en GitHub"
+                      value={draft.profile.github}
+                      onChange={(val) => onUpdateProfile('github', val)}
+                    />
+                  </div>
+
+                  <div className="editor-grid-2">
+                    <EditorField
+                      label="Ruta o URL del CV"
+                      value={draft.profile.cvPath}
+                      onChange={(val) => onUpdateProfile('cvPath', val)}
+                      placeholder="/cv-matias-rivas.pdf"
+                    />
+                    <EditorField
+                      label="Ruta o URL del Avatar"
+                      value={draft.profile.avatarPath}
+                      onChange={(val) => onUpdateProfile('avatarPath', val)}
+                      placeholder="/pancho-floating.png"
+                    />
+                  </div>
+                </EditorSection>
+              )}
+
+              {activeTab === 'stack' && (
+                <>
+                  <EditorSection
+                    title="Tecnologías Frontend"
+                    description="Lenguajes, bibliotecas y herramientas orientadas a interfaces."
+                  >
+                    <ChipManager
+                      label="Tecnologías Frontend"
+                      items={draft.frontendTechnologies || []}
+                      onAdd={(tech) => onAddTech('frontendTechnologies', tech)}
+                      onRemove={(tech) => onRemoveTech('frontendTechnologies', tech)}
+                      placeholder="Escribí una tecnología (ej: Next.js, Tailwind, Vue)..."
+                    />
+                  </EditorSection>
+
+                  <EditorSection
+                    title="Tecnologías Backend y Datos"
+                    description="Lenguajes del servidor, bases de datos, protocolos y APIs."
+                  >
+                    <ChipManager
+                      label="Tecnologías Backend y Datos"
+                      items={draft.backendTechnologies || []}
+                      onAdd={(tech) => onAddTech('backendTechnologies', tech)}
+                      onRemove={(tech) => onRemoveTech('backendTechnologies', tech)}
+                      placeholder="Escribí una tecnología (ej: Node.js, PostgreSQL, Docker)..."
+                    />
+                  </EditorSection>
+
+                  <EditorSection
+                    title="Herramientas de Inteligencia Artificial"
+                    description="Modelos y asistentes utilizados como complemento de desarrollo."
+                  >
+                    <ChipManager
+                      label="Herramientas IA"
+                      items={draft.aiTools || []}
+                      onAdd={(tool) => onAddTech('aiTools', tool)}
+                      onRemove={(tool) => onRemoveTech('aiTools', tool)}
+                      placeholder="Escribí una herramienta (ej: Claude 3.5, Gemini, Cursor)..."
+                    />
+                  </EditorSection>
+                </>
+              )}
+
+              {activeTab === 'games' && (
+                <EditorSection
+                  title="Juegos Destacados"
+                  description="Proyectos lúdicos interactivos que destacan en el portfolio."
+                  action={
+                    <button
+                      className="editor-mini-btn"
+                      type="button"
+                      onClick={() => onAddProject('featuredGames')}
+                    >
+                      <Plus size={15} aria-hidden="true" /> Agregar Juego
+                    </button>
+                  }
+                >
+                  <ProjectEditorList
+                    group="featuredGames"
+                    projects={draft.featuredGames}
+                    onRemoveProject={(id, title) => onRemoveProject('featuredGames', id, title)}
+                    onUpdateProject={onUpdateProject}
+                  />
+                </EditorSection>
+              )}
+
+              {activeTab === 'projects' && (
+                <EditorSection
+                  title="Proyectos Menores y Prácticas"
+                  description="Programas, mantenimiento de hardware o diseños de infraestructura."
+                  action={
+                    <button
+                      className="editor-mini-btn"
+                      type="button"
+                      onClick={() => onAddProject('smallerProjects')}
+                    >
+                      <Plus size={15} aria-hidden="true" /> Agregar Proyecto
+                    </button>
+                  }
+                >
+                  <ProjectEditorList
+                    group="smallerProjects"
+                    projects={draft.smallerProjects}
+                    onRemoveProject={(id, title) => onRemoveProject('smallerProjects', id, title)}
+                    onUpdateProject={onUpdateProject}
+                  />
+                </EditorSection>
+              )}
+
+              {activeTab === 'education' && (
+                <EditorSection
+                  title="Formación Académica y Prácticas"
+                  description="Estudios formales, talleres técnicos y prácticas profesionalizantes."
+                  action={
+                    <button
+                      className="editor-mini-btn"
+                      type="button"
+                      onClick={onAddEducationItem}
+                    >
+                      <Plus size={15} aria-hidden="true" /> Agregar Formación
+                    </button>
+                  }
+                >
+                  {draft.educationItems.map((item, index) => (
+                    <article className="editor-card-item" key={item.id}>
+                      <div className="editor-card-header">
+                        <div className="editor-card-title">
+                          <span className="editor-card-index">{index + 1}</span>
+                          <strong>{item.title || 'Formación sin título'}</strong>
+                        </div>
+                        <button
+                          className="editor-danger-btn"
+                          type="button"
+                          onClick={() => onRemoveEducationItem(item.id, item.title)}
+                        >
+                          <Trash2 size={15} aria-hidden="true" /> Eliminar
+                        </button>
+                      </div>
+
+                      <EditorField
+                        label="Título de la formación"
+                        value={item.title}
+                        onChange={(value) => onUpdateEducation(item.id, 'title', value)}
+                      />
+
+                      <EditorField
+                        label="Descripción o detalle"
+                        value={item.description}
+                        onChange={(value) => onUpdateEducation(item.id, 'description', value)}
+                        multiline
+                      />
+
+                      <div className="editor-field">
+                        <span>Icono representativo</span>
+                        <div className="editor-pill-options">
+                          <button
+                            type="button"
+                            className={`editor-pill-option ${item.icon === 'graduation' ? 'selected' : ''}`}
+                            onClick={() => onUpdateEducation(item.id, 'icon', 'graduation')}
+                          >
+                            <GraduationCap size={15} aria-hidden="true" />
+                            Académico / Institucional
+                          </button>
+                          <button
+                            type="button"
+                            className={`editor-pill-option ${item.icon === 'computer' ? 'selected' : ''}`}
+                            onClick={() => onUpdateEducation(item.id, 'icon', 'computer')}
+                          >
+                            <Laptop size={15} aria-hidden="true" />
+                            Técnico / Hardware
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                </EditorSection>
+              )}
+            </div>
+
             <div className="editor-footer">
-              {error && <p className="form-error" role="alert">{error}</p>}
-              <div className="editor-actions">
-                <button className="btn btn-secondary" type="button" onClick={onClose}>
-                  Cancelar
+              {error && (
+                <p className="form-error" role="alert">
+                  {error}
+                </p>
+              )}
+              <div className="editor-footer-container">
+                <button
+                  type="button"
+                  className="unlock-local-btn"
+                  onClick={onResetToDefaults}
+                  title="Vuelve a los datos iniciales de fábrica"
+                >
+                  <RotateCcw size={14} aria-hidden="true" />
+                  Restablecer originales
                 </button>
-                <button className="btn btn-primary" type="button" onClick={onSave} disabled={isSaving}>
-                  <Save size={17} aria-hidden="true" /> {isSaving ? 'Guardando...' : 'Guardar cambios'}
-                </button>
+
+                <div className="editor-actions">
+                  <button className="btn btn-secondary" type="button" onClick={onClose}>
+                    Cerrar
+                  </button>
+                  <button
+                    className="btn btn-primary"
+                    type="button"
+                    onClick={onSave}
+                    disabled={isSaving}
+                  >
+                    <Save size={17} aria-hidden="true" />
+                    {isSaving ? 'Guardando...' : 'Guardar cambios'}
+                  </button>
+                </div>
               </div>
             </div>
           </>
@@ -848,41 +1167,188 @@ function PortfolioEditor({
   );
 }
 
-function ProjectEditorList({ group, projects, onRemoveProject, onUpdateProject }) {
-  return projects.map((project, index) => (
-    <article className="editor-item" key={`${project.title}-${index}`}>
-      <div className="editor-item-heading">
-        <strong>{project.title || 'Proyecto sin título'}</strong>
-        <button className="editor-danger-btn" type="button" onClick={() => onRemoveProject(group, index)}>
-          <Trash2 size={15} aria-hidden="true" /> Eliminar
+function ChipManager({ label, items, onAdd, onRemove, placeholder = 'Agregar elemento...' }) {
+  const [inputValue, setInputValue] = useState('');
+
+  function handleAdd() {
+    const trimmed = inputValue.trim();
+    if (!trimmed) return;
+    if (items.some((item) => item.toLowerCase() === trimmed.toLowerCase())) {
+      setInputValue('');
+      return;
+    }
+    onAdd(trimmed);
+    setInputValue('');
+  }
+
+  function handleKeyDown(event) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      handleAdd();
+    }
+  }
+
+  return (
+    <div className="chip-manager">
+      <div className="chip-list">
+        {items.length === 0 ? (
+          <span className="chip-list-empty">
+            Sin elementos. Escribí uno y hacé clic en Agregar o presioná Enter.
+          </span>
+        ) : (
+          items.map((item) => (
+            <span className="tag-chip" key={item}>
+              <span>{item}</span>
+              <button
+                type="button"
+                className="tag-chip-remove"
+                onClick={() => onRemove(item)}
+                aria-label={`Eliminar ${item}`}
+                title={`Eliminar ${item}`}
+              >
+                <X size={12} aria-hidden="true" />
+              </button>
+            </span>
+          ))
+        )}
+      </div>
+
+      <div className="chip-input-row">
+        <input
+          type="text"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+        />
+        <button type="button" className="chip-add-btn" onClick={handleAdd}>
+          <Plus size={15} aria-hidden="true" /> Agregar
         </button>
       </div>
-      <EditorField label="Nombre" value={project.title} onChange={(value) => onUpdateProject(group, index, 'title', value)} />
-      <EditorField
-        label="Imagen"
-        value={project.image ?? ''}
-        onChange={(value) => onUpdateProject(group, index, 'image', value)}
-        placeholder="/imagen.png o URL"
-      />
-      <EditorField
-        label="Arte CSS"
-        value={project.art ?? ''}
-        onChange={(value) => onUpdateProject(group, index, 'art', value)}
-        placeholder="repair, network o vacío"
-      />
-      <EditorField
-        label="Descripción"
-        value={project.description}
-        onChange={(value) => onUpdateProject(group, index, 'description', value)}
-        multiline
-      />
-      <EditorField
-        label="Tags"
-        value={(project.tags ?? []).join(', ')}
-        onChange={(value) => onUpdateProject(group, index, 'tags', splitList(value))}
-      />
-    </article>
-  ));
+    </div>
+  );
+}
+
+function ProjectEditorList({ group, projects, onRemoveProject, onUpdateProject }) {
+  return (
+    <div style={{ display: 'grid', gap: '1rem' }}>
+      {projects.map((project, index) => (
+        <article className="editor-card-item" key={project.id}>
+          <div className="editor-card-header">
+            <div className="editor-card-title">
+              <span className="editor-card-index">{index + 1}</span>
+              <strong>{project.title || 'Proyecto sin título'}</strong>
+            </div>
+            <button
+              className="editor-danger-btn"
+              type="button"
+              onClick={() => onRemoveProject(project.id, project.title)}
+            >
+              <Trash2 size={15} aria-hidden="true" /> Eliminar
+            </button>
+          </div>
+
+          <div className="editor-grid-2">
+            <EditorField
+              label="Nombre del proyecto"
+              value={project.title}
+              onChange={(value) => onUpdateProject(group, project.id, 'title', value)}
+            />
+            <EditorField
+              label="Etiqueta de estado o badge"
+              value={project.status ?? ''}
+              onChange={(value) => onUpdateProject(group, project.id, 'status', value)}
+              placeholder="Ej: Juego destacado, En desarrollo..."
+            />
+          </div>
+
+          <div className="editor-grid-2">
+            <EditorField
+              label="Ruta o URL de Imagen"
+              value={project.image ?? ''}
+              onChange={(value) => onUpdateProject(group, project.id, 'image', value)}
+              placeholder="/panchos-snake.png o URL externa"
+            />
+
+            <div className="editor-field">
+              <span>Arte visual generado por CSS</span>
+              <div className="editor-pill-options">
+                <button
+                  type="button"
+                  className={`editor-pill-option ${!project.art ? 'selected' : ''}`}
+                  onClick={() => onUpdateProject(group, project.id, 'art', '')}
+                >
+                  Usar imagen
+                </button>
+                <button
+                  type="button"
+                  className={`editor-pill-option ${project.art === 'repair' ? 'selected' : ''}`}
+                  onClick={() => onUpdateProject(group, project.id, 'art', 'repair')}
+                >
+                  <Laptop size={14} aria-hidden="true" /> Hardware / PC
+                </button>
+                <button
+                  type="button"
+                  className={`editor-pill-option ${project.art === 'network' ? 'selected' : ''}`}
+                  onClick={() => onUpdateProject(group, project.id, 'art', 'network')}
+                >
+                  <Cpu size={14} aria-hidden="true" /> Redes LAN
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <EditorField
+            label="Descripción detallada"
+            value={project.description}
+            onChange={(value) => onUpdateProject(group, project.id, 'description', value)}
+            multiline
+          />
+
+          <div className="editor-grid-2">
+            <EditorField
+              label="Enlace a Demo (opcional)"
+              value={project.links?.demo ?? ''}
+              onChange={(value) =>
+                onUpdateProject(group, project.id, 'links', {
+                  ...(project.links || {}),
+                  demo: value,
+                })
+              }
+              placeholder="https://..."
+            />
+            <EditorField
+              label="Enlace al Código en GitHub (opcional)"
+              value={project.links?.code ?? ''}
+              onChange={(value) =>
+                onUpdateProject(group, project.id, 'links', {
+                  ...(project.links || {}),
+                  code: value,
+                })
+              }
+              placeholder="https://github.com/..."
+            />
+          </div>
+
+          <div className="editor-field">
+            <span>Tecnologías y Etiquetas</span>
+            <ChipManager
+              items={project.tags || []}
+              onAdd={(tag) => {
+                const nextTags = [...(project.tags || []), tag];
+                onUpdateProject(group, project.id, 'tags', nextTags);
+              }}
+              onRemove={(tag) => {
+                const nextTags = (project.tags || []).filter((t) => t !== tag);
+                onUpdateProject(group, project.id, 'tags', nextTags);
+              }}
+              placeholder="Agregar tag (ej: React, Canvas, Python)..."
+            />
+          </div>
+        </article>
+      ))}
+    </div>
+  );
 }
 
 function EditorSection({ title, description, action, children }) {
@@ -905,19 +1371,21 @@ function EditorField({ label, value, onChange, placeholder = '', multiline = fal
     <label className="editor-field">
       <span>{label}</span>
       {multiline ? (
-        <textarea rows="3" value={value ?? ''} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} />
+        <textarea
+          rows="3"
+          value={value ?? ''}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+        />
       ) : (
-        <input value={value ?? ''} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} />
+        <input
+          value={value ?? ''}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+        />
       )}
     </label>
   );
-}
-
-function splitList(value) {
-  return value
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean);
 }
 
 function ProjectCard({ project, large = false }) {
@@ -935,12 +1403,38 @@ function ProjectCard({ project, large = false }) {
         <h3>{project.title}</h3>
         <p>{project.description}</p>
         <div className="tag-row">
-          {project.tags.map((tag) => (
+          {(project.tags || []).map((tag) => (
             <span className="tag" key={tag}>
               {tag}
             </span>
           ))}
         </div>
+        {(project.links?.demo || project.links?.code) && (
+          <div style={{ display: 'flex', gap: '0.65rem', marginTop: '0.85rem' }}>
+            {project.links?.demo && (
+              <a
+                className="link-button"
+                href={project.links.demo}
+                target="_blank"
+                rel="noreferrer"
+                style={{ padding: '0.4rem 0.75rem', fontSize: '0.82rem' }}
+              >
+                Demo <ExternalLink size={13} aria-hidden="true" />
+              </a>
+            )}
+            {project.links?.code && (
+              <a
+                className="link-button"
+                href={project.links.code}
+                target="_blank"
+                rel="noreferrer"
+                style={{ padding: '0.4rem 0.75rem', fontSize: '0.82rem' }}
+              >
+                Código <Github size={13} aria-hidden="true" />
+              </a>
+            )}
+          </div>
+        )}
       </div>
     </article>
   );
@@ -970,49 +1464,6 @@ function ProjectArt({ type, title }) {
       <span className="tool-orbit orbit-one" />
       <span className="tool-orbit orbit-two" />
       <span className="repair-chip">CPU</span>
-    </div>
-  );
-}
-
-function Field({
-  label,
-  name,
-  value,
-  error,
-  onChange,
-  placeholder,
-  type = 'text',
-  multiline = false,
-  autoComplete,
-  minLength,
-  maxLength,
-  required = false,
-}) {
-  const fieldId = `field-${name}`;
-  const errorId = `${fieldId}-error`;
-  const props = {
-    id: fieldId,
-    name,
-    value,
-    onChange,
-    placeholder,
-    autoComplete,
-    minLength,
-    maxLength,
-    required,
-    'aria-invalid': Boolean(error),
-    'aria-describedby': error ? errorId : undefined,
-  };
-
-  return (
-    <div className="form-group">
-      <label htmlFor={fieldId}>{label}</label>
-      {multiline ? <textarea rows="5" {...props} /> : <input type={type} {...props} />}
-      {error && (
-        <p className="form-error" id={errorId}>
-          {error}
-        </p>
-      )}
     </div>
   );
 }

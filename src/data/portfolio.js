@@ -1,9 +1,9 @@
 export const profile = {
   name: 'Matías Rivas',
-  role: 'Desarrolla Frontend',
+  role: 'Desarrollador de Frontend',
   subtitle: 'con conocimientos de Backend',
   email: 'rivasmatiasmisael@gmail.com',
-  github: 'https://github.com/Matias160/Matias-Rivas----Estanga',
+  github: 'https://github.com/Matias160',
   education: 'Escuela Técnica N.º 5, área de Informática',
   cvPath: '/cv-matias-rivas.pdf',
   avatarPath: '/pancho-floating.png',
@@ -14,12 +14,15 @@ export const profile = {
     'Utilizo IA para programar y desarrollar proyectos como herramienta complementaria. Experimento con modelos y asistentes para explorar ideas, mejorar flujos de trabajo y reforzar mis habilidades técnicas.',
 };
 
-export const technologies = [
+export const frontendTechnologies = [
   'HTML',
   'CSS',
   'JavaScript',
   'TypeScript',
   'React',
+];
+
+export const backendTechnologies = [
   'Python',
   'SQL',
   'PHP',
@@ -27,15 +30,22 @@ export const technologies = [
   'C++',
 ];
 
+export const technologies = [
+  ...frontendTechnologies,
+  ...backendTechnologies,
+];
+
 export const aiTools = ['ChatGPT', 'Codex', 'Claude', 'Gemini', 'Antigravity'];
 
 export const educationItems = [
   {
+    id: 'edu-tecnica-5',
     title: 'Escuela Técnica N.º 5, área de Informática',
     description: 'Conocimientos y formación técnica.',
     icon: 'graduation',
   },
   {
+    id: 'edu-practicas-hardware',
     title: 'Prácticas profesionalizantes de reparación de hardware',
     description: 'Conocimientos sobre reparación de notebooks y otros dispositivos.',
     icon: 'computer',
@@ -73,24 +83,39 @@ export const featuredGames = [
 
 export const smallerProjects = [
   {
+    id: 'bocha-stats',
     title: 'Bocha Stats',
     image: '/bocha-stats.png',
     description:
       'Programa dedicado a estadísticas del fútbol argentino: ligas, equipos, jugadores y campeonatos, con información organizada y actualizada.',
     tags: ['Python', 'Estadísticas', 'Fútbol argentino'],
+    links: {
+      demo: '',
+      code: '',
+    },
   },
   {
+    id: 'reparacion-pc',
     title: 'Reparación de computadoras',
     art: 'repair',
     description:
       'Experiencia en arreglo y mantenimiento de dispositivos, con conocimientos de hardware y software desarrollados en prácticas profesionalizantes de la Escuela Técnica N.º 5.',
     tags: ['Hardware', 'Software', 'Mantenimiento'],
+    links: {
+      demo: '',
+      code: '',
+    },
   },
   {
+    id: 'diseno-redes',
     title: 'Diseño de redes informáticas',
     art: 'network',
     description:
       'Planteamiento y diseño de redes informáticas, topologías, dispositivos necesarios y mantenimiento. Experiencia aplicada en el diseño de redes para dos edificios.',
     tags: ['Redes', 'Topologías', 'Infraestructura'],
+    links: {
+      demo: '',
+      code: '',
+    },
   },
 ];

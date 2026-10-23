@@ -29,7 +29,26 @@ Ahí se pueden cambiar:
 
 ## Hosting y base de datos
 
-El portfolio está preparado para publicarse en ChatGPT Sites con una base de datos D1 disponible mediante el binding `DB`. El build genera un Worker que sirve la página y expone `/api/portfolio`, una ruta que lee la información del portfolio desde D1 y usa el contenido local como respaldo.
+El sitio se publica como un Worker. El Worker sirve los archivos de React y ofrece rutas `/api/...` para leer y editar el contenido. En el hosting, el binding `DB` conecta ese Worker con una base D1.
+
+### Qué se guarda
+
+D1 contiene una tabla `portfolio_content` con estas columnas:
+
+- `id`: identificador del registro. El portfolio usa `main`.
+- `content`: el contenido editable completo, serializado como JSON: perfil, tecnologías, herramientas, formación y proyectos.
+- `updated_at`: fecha y hora de la última actualización.
+
+No se crea una fila por tarjeta. Todo el contenido se guarda en un único registro `main`; por eso los cambios hechos desde el editor reemplazan el documento completo del portfolio.
+
+### Recorrido de los datos
+
+1. Al abrir la página, React solicita `GET /api/portfolio`.
+2. El Worker busca `portfolio_content.main` en D1. Si todavía no existe, inicializa la tabla y el registro usando los datos de `src/data/portfolio.js` incluidos en el build.
+3. Al guardar desde el editor, React envía el contenido a `PUT /api/portfolio` junto con la clave del editor.
+4. El Worker verifica la clave, normaliza los datos y hace un UPSERT: crea `main` la primera vez o actualiza el registro y su fecha.
+
+`src/data/portfolio.js` funciona como contenido inicial o respaldo si D1 no está conectado. La clave se configura en el hosting como variable secreta `PORTFOLIO_EDIT_KEY`; no se guarda en la base ni en el código de la página. El tema visual es distinto: se guarda localmente en el navegador de cada visitante, no en D1.
 
 ## Agregar CV
 
@@ -49,7 +68,7 @@ La página mostrará la vista previa y habilitará la descarga automáticamente.
 - Modo día/noche.
 - Animaciones y escena 3D con Three.js.
 - Hooks, eventos e interacción.
-- Formulario con validación accesible y feedback propio sin `alert`.
+- Contacto directo mediante enlaces a email y GitHub; no hay formulario de envío.
 - Proyectos como plantillas editables.
 - Hosting preparado con base de datos D1 (`DB`).
 - README del proyecto.
